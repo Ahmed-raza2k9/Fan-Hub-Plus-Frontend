@@ -47,18 +47,26 @@ export function DataProvider({ children }) {
         merchRes,
         eventsRes
       ] = await Promise.all([
-        adminApi.getCategories().catch(() => ({ categories: [] })),
-        adminApi.getContent().catch(() => ({ content: [] })),
-        adminApi.getCharacters().catch(() => ({ characters: [] })),
-        adminApi.getMerchandise().catch(() => ({ merchandise: [] })),
-        adminApi.getEvents().catch(() => ({ events: [] }))
+        adminApi.getCategories().catch((err) => { console.error('Categories fetch error:', err); return { categories: [] }; }),
+        adminApi.getContent().catch((err) => { console.error('Content fetch error:', err); return { content: [] }; }),
+        adminApi.getCharacters().catch((err) => { console.error('Characters fetch error:', err); return { characters: [] }; }),
+        adminApi.getMerchandise().catch((err) => { console.error('Merchandise fetch error:', err); return { merchandise: [] }; }),
+        adminApi.getEvents().catch((err) => { console.error('Events fetch error:', err); return { events: [] }; })
       ]);
 
-      setCategories(Array.isArray(catsRes?.categories) ? catsRes.categories.map(normalizeItem) : []);
-      setContentList(Array.isArray(contentRes?.content) ? contentRes.content.map(normalizeItem) : []);
-      setCharacters(Array.isArray(charsRes?.characters) ? charsRes.characters.map(normalizeItem) : []);
-      setMerchandise(Array.isArray(merchRes?.merchandise) ? merchRes.merchandise.map(normalizeItem) : []);
-      setEvents(Array.isArray(eventsRes?.events) ? eventsRes.events.map(normalizeItem) : []);
+      const extractArray = (res, key) => {
+        if (!res) return [];
+        if (Array.isArray(res[key])) return res[key];
+        if (Array.isArray(res.data)) return res.data;
+        if (Array.isArray(res)) return res;
+        return [];
+      };
+
+      setCategories(extractArray(catsRes, 'categories').map(normalizeItem));
+      setContentList(extractArray(contentRes, 'content').map(normalizeItem));
+      setCharacters(extractArray(charsRes, 'characters').map(normalizeItem));
+      setMerchandise(extractArray(merchRes, 'merchandise').map(normalizeItem));
+      setEvents(extractArray(eventsRes, 'events').map(normalizeItem));
 
       if (token) {
         const [usersRes, subsRes, fbRes, bkmRes, ratRes] = await Promise.all([
@@ -69,9 +77,9 @@ export function DataProvider({ children }) {
           userApi.getRatings().catch(() => ({ ratings: [] }))
         ]);
 
-        setUsersList(Array.isArray(usersRes?.users) ? usersRes.users.map(normalizeItem) : []);
-        setFanSubmissions(Array.isArray(subsRes?.submissions) ? subsRes.submissions.map(normalizeItem) : []);
-        setFeedbackList(Array.isArray(fbRes?.feedback) ? fbRes.feedback.map(normalizeItem) : []);
+        setUsersList(extractArray(usersRes, 'users').map(normalizeItem));
+        setFanSubmissions(extractArray(subsRes, 'submissions').map(normalizeItem));
+        setFeedbackList(extractArray(fbRes, 'feedback').map(normalizeItem));
 
         if (Array.isArray(bkmRes?.bookmarks)) {
           setBookmarks(

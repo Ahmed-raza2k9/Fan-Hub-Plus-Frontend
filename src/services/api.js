@@ -1,11 +1,13 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
 
 /**
  * Centralized fetch wrapper with automatic JWT header attachment,
  * FormData detection, and error parsing.
  */
 async function request(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${API_BASE_URL}${cleanEndpoint}`;
 
   const headers = options.headers ? { ...options.headers } : {};
 
