@@ -135,7 +135,7 @@ export default function Explore() {
           Explore <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-500 to-amber-500">Content & Media</span>
         </h1>
         <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium">
-          Discover videos, episodes, convention trailers, wallpapers, and soundtrack releases across all 8 fandom categories.
+          Discover videos, episodes, convention trailers, and soundtrack releases across all fandom categories.
         </p>
       </div>
 

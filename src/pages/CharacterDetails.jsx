@@ -4,6 +4,8 @@ import { ArrowLeft, Mic, Shield, Sparkles, Tag, Film, Quote, Zap } from 'lucide-
 import { useData } from '../context/DataContext';
 import ContentCard from '../components/ContentCard';
 import EmptyState from '../components/EmptyState';
+import BookmarkButton from '../components/BookmarkButton';
+import ShareButton from '../components/ShareButton';
 
 export default function CharacterDetails() {
   const { slug } = useParams();
@@ -67,16 +69,23 @@ export default function CharacterDetails() {
           </div>
 
           <div className="md:col-span-2 space-y-6">
-            <div>
-              <span className="text-xs font-mono text-red-400 font-semibold uppercase tracking-wider">
-                Codex Entry • {catName}
-              </span>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-display mt-1 mb-2">
-                {character.name}
-              </h1>
-              <p className="text-sm font-semibold text-red-300/90">
-                {shortBioText}
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div>
+                <span className="text-xs font-mono text-red-400 font-semibold uppercase tracking-wider">
+                  Codex Entry • {catName}
+                </span>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-display mt-1 mb-2">
+                  {character.name}
+                </h1>
+                <p className="text-sm font-semibold text-red-300/90">
+                  {shortBioText}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <BookmarkButton item={character} itemType="Character" showLabel={true} size="md" />
+                <ShareButton item={character} itemType="Character" showLabel={true} size="md" variant="pill" />
+              </div>
             </div>
 
             {character.quote && (

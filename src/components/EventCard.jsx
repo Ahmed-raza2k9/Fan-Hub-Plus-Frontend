@@ -7,10 +7,13 @@ export default function EventCard({ event }) {
   const categoryName = typeof event.category === 'object' ? event.category?.name || 'Convention' : event.category || 'Convention';
 
   return (
-    <div className="group relative rounded-3xl overflow-hidden bg-white dark:bg-[#070204] border border-zinc-200/80 dark:border-red-950/80 hover:border-red-500/60 transition-all duration-300 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_0_20px_rgba(220,38,38,0.12)] hover:shadow-xl dark:hover:shadow-[0_0_35px_rgba(239,68,68,0.35)] flex flex-col justify-between">
+    <Link
+      to={`/events/${event.slug}`}
+      className="group relative rounded-3xl overflow-hidden bg-white dark:bg-[#070204] border border-zinc-200/80 dark:border-red-950/80 hover:border-red-500/60 transition-all duration-300 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_0_20px_rgba(220,38,38,0.12)] hover:shadow-xl dark:hover:shadow-[0_0_35px_rgba(239,68,68,0.35)] flex flex-col justify-between block"
+    >
       <div>
         <div className="relative aspect-[16/10] overflow-hidden bg-zinc-900">
-          <Link to={`/events/${event.slug}`} className="block w-full h-full">
+          <div className="w-full h-full">
             <img
               src={event.image}
               alt={event.title}
@@ -18,7 +21,7 @@ export default function EventCard({ event }) {
               className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
-          </Link>
+          </div>
 
           <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
             <span className="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-black/70 backdrop-blur-md text-red-300 border border-red-600/30">
@@ -44,11 +47,9 @@ export default function EventCard({ event }) {
         </div>
 
         <div className="p-5 space-y-3">
-          <Link to={`/events/${event.slug}`}>
-            <h4 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight line-clamp-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors font-display">
-              {event.title}
-            </h4>
-          </Link>
+          <h4 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight line-clamp-1 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors font-display">
+            {event.title}
+          </h4>
 
           <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
             {event.description}
@@ -68,14 +69,13 @@ export default function EventCard({ event }) {
       </div>
 
       <div className="p-5 pt-0">
-        <Link
-          to={`/events/${event.slug}`}
+        <span
           className="w-full py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-600 dark:bg-red-950/40 dark:hover:bg-gradient-to-r dark:hover:from-red-600 dark:hover:to-rose-600 text-xs font-bold text-red-600 hover:text-white dark:text-red-300 dark:hover:text-white border border-red-200 dark:border-red-600/30 hover:border-transparent flex items-center justify-center gap-2 shadow-sm transition-all group/btn"
         >
           <span>Get Event Passes</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-        </Link>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }

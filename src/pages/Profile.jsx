@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Mail, Shield, Check, Edit2, Camera, Calendar, MapPin, Phone, Heart, ChevronRight, Loader2, AlertCircle, X } from 'lucide-react';
+import { User, Mail, Shield, Check, Edit2, Camera, Calendar, ChevronRight, Loader2, AlertCircle, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Profile() {
@@ -9,17 +9,14 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Profile data states
+  // Profile data states — only fields that exist in the database
   const [name, setName] = useState(currentUser?.name || '');
   const email = currentUser?.email || '';
-  const [phone, setPhone] = useState('0313-8318499');
-  const [location, setLocation] = useState('Karachi, Pakistan');
-  const [dob, setDob] = useState('15 Jan 2003');
-  const [gender, setGender] = useState('Male');
-  const [bio, setBio] = useState('Passionate about web development, technology and building creative solutions.');
-  const [avatar, setAvatar] = useState(currentUser?.avatar || 'https://i.pravatar.cc/150?img=11');
+  const [avatar, setAvatar] = useState(currentUser?.avatar || '');
   const role = currentUser?.role || 'User';
-  const joinedDate = currentUser?.createdAt ? new Date(currentUser.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Jan 2025';
+  const joinedDate = currentUser?.createdAt
+    ? new Date(currentUser.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : '—';
 
   // File upload state
   const [avatarFile, setAvatarFile] = useState(null);
@@ -32,11 +29,11 @@ export default function Profile() {
   useEffect(() => {
     if (currentUser) {
       setName(currentUser.name || '');
-      setAvatar(currentUser.avatar || 'https://i.pravatar.cc/150?img=11');
+      setAvatar(currentUser.avatar || '');
     }
   }, [currentUser]);
 
-  const displayAvatar = avatarPreview || avatar || currentUser?.avatar || 'https://i.pravatar.cc/150?img=11';
+  const displayAvatar = avatarPreview || avatar || currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=7f1d1d&color=fff&size=200`;
 
   const handleCameraClick = () => {
     if (fileInputRef.current) {
@@ -110,7 +107,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-5xl mx-auto pb-20 space-y-6 text-zinc-100 selection:bg-red-500/30 font-sans">
-      
+
       {/* Hidden File Input for Image Upload */}
       <input
         type="file"
@@ -127,9 +124,9 @@ export default function Profile() {
           <div className="absolute -top-40 -right-20 w-[600px] h-[600px] bg-gradient-to-bl from-red-600/30 via-red-900/10 to-transparent blur-3xl rounded-full" />
           <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-red-950/20 to-transparent" />
         </div>
-        
+
         <div className="relative flex flex-col md:flex-row gap-8 items-start md:items-center">
-          
+
           {/* Avatar Area with Image Upload trigger */}
           <div className="relative shrink-0 z-10 group">
             <img
@@ -158,7 +155,7 @@ export default function Profile() {
                   <span>{email}</span>
                 </div>
               </div>
-              
+
               <div className="flex flex-col md:items-end gap-3">
                 <div className="hidden md:flex items-center gap-3 text-sm text-zinc-300 font-medium">
                   <span>Build</span> <span className="text-red-600 font-bold">•</span>
@@ -167,7 +164,7 @@ export default function Profile() {
                 </div>
                 {isSaving ? (
                   <button disabled className="px-5 py-2 rounded-full bg-red-600/60 text-white text-sm font-bold flex items-center gap-2 cursor-not-allowed">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Uploading & Saving...
+                    <Loader2 className="w-4 h-4 animate-spin" /> Saving...
                   </button>
                 ) : isEditing ? (
                   <button onClick={handleSave} className="px-5 py-2 rounded-full bg-red-600 hover:bg-red-500 text-white text-sm font-bold shadow-lg shadow-red-600/30 transition-colors flex items-center gap-2 cursor-pointer">
@@ -205,14 +202,6 @@ export default function Profile() {
               <p className="text-sm font-medium text-white font-mono uppercase text-xs">{role}</p>
             </div>
           </div>
-          <div className="hidden md:block w-px h-8 bg-white/10" />
-          <div className="flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-red-500" />
-            <div>
-              <p className="text-[11px] text-zinc-400 uppercase tracking-wider mb-0.5">Location</p>
-              <p className="text-sm font-medium text-white">{location}</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -232,57 +221,31 @@ export default function Profile() {
 
       {/* Main Grid Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Personal Information */}
-        <div className="lg:col-span-2 rounded-3xl bg-[#0a0204] border border-white/5 p-6 md:p-8 shadow-xl">
-          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
-            <User className="w-5 h-5 text-white" />
-            <h2 className="text-lg font-bold text-white">Personal Information</h2>
+
+        {/* Left Column: Account Information */}
+        <div className="lg:col-span-2 rounded-3xl bg-white dark:bg-[#0a0204] border border-zinc-200 dark:border-white/5 p-6 md:p-8 shadow-xl">
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-zinc-200 dark:border-white/5">
+            <User className="w-5 h-5 text-zinc-900 dark:text-white" />
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Account Information</h2>
           </div>
 
           <div className="space-y-6 md:space-y-8">
+            {/* Full Name — editable */}
             <InfoField icon={User} label="Full Name" value={name} isEditing={isEditing} onChange={setName} />
-            
+
+            {/* Email — read-only */}
             <div className="flex items-start gap-4">
               <div className="mt-1">
                 <Mail className="w-5 h-5 text-red-600" />
               </div>
               <div className="flex-1 pb-2">
-                <p className="text-[13px] text-zinc-400 mb-1">Email Address</p>
+                <p className="text-[13px] text-zinc-500 dark:text-zinc-400 mb-1">Email Address</p>
                 <input
                   type="text"
                   value={email}
                   disabled
-                  className="w-full bg-transparent text-sm font-medium text-zinc-300 focus:outline-none cursor-not-allowed"
+                  className="w-full bg-transparent text-sm font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none cursor-not-allowed"
                 />
-              </div>
-            </div>
-
-            <InfoField icon={Phone} label="Phone Number" value={phone} isEditing={isEditing} onChange={setPhone} />
-            <InfoField icon={MapPin} label="Location" value={location} isEditing={isEditing} onChange={setLocation} />
-            <InfoField icon={Calendar} label="Date of Birth" value={dob} isEditing={isEditing} onChange={setDob} />
-            
-            <div className="flex items-start gap-4">
-              <div className="mt-1">
-                <svg className="w-5 h-5 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5"/><path d="M12 17v5"/><path d="M9 20h6"/><path d="M15.5 8.5L19 5"/><path d="M19 9V5h-4"/>
-                </svg>
-              </div>
-              <div className="flex-1 pb-2">
-                <p className="text-[13px] text-zinc-400 mb-1">Gender</p>
-                {isEditing ? (
-                  <select 
-                    value={gender} 
-                    onChange={(e) => setGender(e.target.value)}
-                    className="w-full max-w-xs bg-[#150508] border border-red-500/30 rounded-lg px-3 py-2 text-sm font-medium text-white focus:outline-none focus:border-red-500"
-                  >
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
-                  </select>
-                ) : (
-                  <p className="text-sm font-medium text-white">{gender}</p>
-                )}
               </div>
             </div>
           </div>
@@ -290,12 +253,12 @@ export default function Profile() {
 
         {/* Right Column */}
         <div className="space-y-6">
-          
+
           {/* Profile Picture Card */}
-          <div className="rounded-3xl bg-[#0a0204] border border-white/5 p-6 md:p-8 shadow-xl">
+          <div className="rounded-3xl bg-white dark:bg-[#0a0204] border border-zinc-200 dark:border-white/5 p-6 md:p-8 shadow-xl">
             <div className="flex items-center gap-3 mb-6">
-              <User className="w-5 h-5 text-white" />
-              <h2 className="text-lg font-bold text-white">Profile Picture</h2>
+              <User className="w-5 h-5 text-zinc-900 dark:text-white" />
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Profile Picture</h2>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <img src={displayAvatar} alt="Profile" className="w-16 h-16 rounded-full object-cover ring-2 ring-red-600/50" />
@@ -303,18 +266,18 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={handleCameraClick}
-                  className="px-4 py-2 rounded-full border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2 rounded-full border border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10 text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5" /> Select Image File
                 </button>
 
                 {avatarFile && (
-                  <div className="flex items-center gap-2 text-xs text-zinc-300 bg-red-950/40 p-2 rounded-xl border border-red-500/20">
+                  <div className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 bg-red-50 dark:bg-red-950/40 p-2 rounded-xl border border-red-200 dark:border-red-500/20">
                     <span className="truncate flex-1">New: {avatarFile.name}</span>
                     <button
                       type="button"
                       onClick={clearSelectedFile}
-                      className="p-0.5 text-red-400 hover:text-white rounded"
+                      className="p-0.5 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-white rounded"
                       title="Clear selected image"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -325,62 +288,21 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* About Me Card */}
-          <div className="rounded-3xl bg-[#0a0204] border border-white/5 p-6 md:p-8 shadow-xl relative">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-white" />
-                <h2 className="text-lg font-bold text-white">About Me</h2>
-              </div>
-              <Edit2 className="w-4 h-4 text-zinc-600" />
-            </div>
-            {isEditing ? (
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={4}
-                className="w-full bg-[#150508] border border-red-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 resize-none"
-              />
-            ) : (
-              <p className="text-[13px] text-zinc-300 leading-relaxed font-medium">
-                {bio}
-              </p>
-            )}
-          </div>
-
-          {/* Favorite Category Card */}
-          <div className="rounded-3xl bg-[#0a0204] border border-white/5 p-6 md:p-8 shadow-xl relative">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <Heart className="w-5 h-5 text-white" />
-                <h2 className="text-lg font-bold text-white">Favorite Category</h2>
-              </div>
-              <Edit2 className="w-4 h-4 text-zinc-600" />
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              {['Web Development', 'UI/UX Design', 'Technology', 'Gaming'].map((cat, i) => (
-                <span key={cat} className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${i === 0 ? 'bg-red-600 text-white border-red-600' : 'bg-transparent text-zinc-300 border-white/10 hover:border-red-500/50'}`}>
-                  {cat}
-                </span>
-              ))}
-            </div>
-          </div>
-
         </div>
       </div>
 
       {/* Account Settings Banner */}
-      <button className="w-full rounded-2xl bg-[#0a0204] border border-white/5 p-5 md:p-6 flex items-center justify-between group hover:bg-[#110306] transition-colors shadow-xl cursor-pointer">
+      <button className="w-full rounded-2xl bg-white dark:bg-[#0a0204] border border-zinc-200 dark:border-white/5 p-5 md:p-6 flex items-center justify-between group hover:bg-zinc-50 dark:hover:bg-[#110306] transition-colors shadow-xl cursor-pointer">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-red-950/50 text-red-500">
+          <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-500">
             <Shield className="w-6 h-6" />
           </div>
           <div className="text-left">
-            <h3 className="text-base font-bold text-white mb-1">Account Settings</h3>
-            <p className="text-[13px] text-zinc-400 font-medium">Manage your account preferences and security.</p>
+            <h3 className="text-base font-bold text-zinc-900 dark:text-white mb-1">Account Settings</h3>
+            <p className="text-[13px] text-zinc-600 dark:text-zinc-400 font-medium">Manage your account preferences and security.</p>
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-red-400 transition-colors" />
+        <ChevronRight className="w-5 h-5 text-zinc-400 dark:text-zinc-500 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
       </button>
 
     </div>
@@ -395,16 +317,16 @@ function InfoField({ icon: Icon, label, value, isEditing, onChange }) {
         <Icon className="w-5 h-5 text-red-600" />
       </div>
       <div className="flex-1 pb-2">
-        <p className="text-[13px] text-zinc-400 mb-1">{label}</p>
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 mb-1">{label}</p>
         {isEditing ? (
           <input
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full max-w-sm bg-[#150508] border border-red-500/30 rounded-lg px-3 py-2 text-sm font-medium text-white focus:outline-none focus:border-red-500 transition-colors"
+            className="w-full max-w-sm bg-zinc-50 dark:bg-[#150508] border border-zinc-300 dark:border-red-500/30 rounded-lg px-3 py-2 text-sm font-medium text-zinc-900 dark:text-white focus:outline-none focus:border-red-500 transition-colors"
           />
         ) : (
-          <p className="text-sm font-medium text-white">{value}</p>
+          <p className="text-sm font-medium text-zinc-900 dark:text-white">{value}</p>
         )}
       </div>
     </div>

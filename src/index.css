@@ -50,84 +50,25 @@
     min-height: 100vh;
   }
 
-  /* Light mode full screen styling */
+  /* Light mode root defaults */
   html:not(.dark) {
     color-scheme: light;
   }
 
   html:not(.dark) header {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    border-bottom-color: rgba(244, 63, 94, 0.15) !important;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-bottom-color: rgba(244, 63, 94, 0.15);
   }
 
   html:not(.dark) aside {
-    background-color: #ffffff !important;
-    border-right-color: rgba(244, 63, 94, 0.15) !important;
+    border-right-color: rgba(244, 63, 94, 0.15);
   }
 
   html:not(.dark) footer {
-    background-color: #fdf2f4 !important;
-    border-top-color: rgba(244, 63, 94, 0.15) !important;
-    color: #4c1d2e !important;
+    border-top-color: rgba(244, 63, 94, 0.15);
   }
 
-  /* Override dark blue backgrounds */
-  html:not(.dark) .bg-\[\#080b12\],
-  html:not(.dark) .bg-\[\#060913\],
-  html:not(.dark) .bg-\[\#070911\],
-  html:not(.dark) .bg-\[\#060a14\] {
-    background-color: #fdf2f4 !important;
-  }
-
-  /* Override dark red/black card backgrounds */
-  html:not(.dark) .bg-\[\#0a0204\],
-  html:not(.dark) .bg-\[\#150508\],
-  html:not(.dark) .bg-\[\#1a0509\],
-  html:not(.dark) .bg-\[\#040102\],
-  html:not(.dark) .bg-\[\#090d18\],
-  html:not(.dark) .bg-\[\#0c101d\],
-  html:not(.dark) .bg-\[\#0a0f1d\],
-  html:not(.dark) .bg-\[\#070b16\]\/95,
-  html:not(.dark) .bg-\[\#0e1424\],
-  html:not(.dark) .bg-\[\#060a14\],
-  html:not(.dark) .bg-\[\#090b10\],
-  html:not(.dark) .bg-\[\#12080c\] {
-    background-color: #ffffff !important;
-    background-image: none !important;
-    box-shadow: 0 8px 30px -4px rgba(225, 29, 72, 0.08) !important;
-  }
-
-  /* Override dark borders */
-  html:not(.dark) .border-white\/5,
-  html:not(.dark) .border-white\/10,
-  html:not(.dark) .border-white\/15,
-  html:not(.dark) .border-white\/20,
-  html:not(.dark) .border-white\/\[0\.07\],
-  html:not(.dark) .border-white\/\[0\.08\] {
-    border-color: rgba(244, 63, 94, 0.15) !important;
-  }
-
-  /* (Removed global text-zinc overrides to fix banner text legibility) */
-
-  /* Target specific cards for text color flipping */
-  html:not(.dark) .bg-\[\#0a0204\] h1,
-  html:not(.dark) .bg-\[\#0a0204\] h2,
-  html:not(.dark) .bg-\[\#0a0204\] h3,
-  html:not(.dark) .bg-\[\#0a0204\] h4,
-  html:not(.dark) .bg-\[\#0a0204\] p,
-  html:not(.dark) .bg-\[\#150508\] h1,
-  html:not(.dark) .bg-\[\#150508\] h2,
-  html:not(.dark) .bg-\[\#150508\] h3,
-  html:not(.dark) .bg-\[\#150508\] h4,
-  html:not(.dark) .bg-\[\#150508\] p {
-    color: #1a0509 !important;
-  }
-  
-  html:not(.dark) .group:hover > h3,
-  html:not(.dark) .group:hover > h4 {
-    color: #e11d48 !important;
-  }
-
+  /* Scrollbar styles */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -146,6 +87,7 @@
     background: rgba(156, 163, 175, 0.55);
   }
 }
+
 
 /* Hide scrollbars for smooth touch carousels */
 .scrollbar-none {
@@ -175,4 +117,171 @@ img {
 /* Interactive touch improvements */
 button, a {
   touch-action: manipulation;
+}
+
+/* ── Fan Hub Plus Admin shell (forced red/black, independent of site light mode) ── */
+.admin-shell {
+  --admin-bg: #0a0204;
+  --admin-surface: #140508;
+  --admin-elevated: #1c080c;
+  --admin-hover: rgba(255, 46, 99, 0.07);
+  --admin-border: rgba(255, 46, 99, 0.14);
+  --admin-red: #ff2e63;
+  --admin-red-deep: #d6004c;
+  --admin-red-soft: rgba(255, 46, 99, 0.14);
+  --admin-text: #fafafa;
+  --admin-muted: #a8a29e;
+  --admin-faint: #78716c;
+  --admin-radius: 12px;
+  --admin-shadow: 0 8px 28px -12px rgba(0, 0, 0, 0.55);
+  background: var(--admin-bg) !important;
+  color: var(--admin-text) !important;
+  min-height: 100vh;
+  color-scheme: dark;
+}
+
+html:not(.dark) .admin-shell,
+html:not(.dark) .admin-shell aside,
+html:not(.dark) .admin-shell header,
+html:not(.dark) .admin-shell main {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text) !important;
+  background-image: none !important;
+}
+
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell p,
+.admin-shell span,
+.admin-shell label {
+  color: inherit;
+}
+
+.admin-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-card-hover:hover {
+  border-color: rgba(255, 46, 99, 0.38);
+}
+
+.admin-shell input:not([type='checkbox']):not([type='file']):not([type='radio']),
+.admin-shell select,
+.admin-shell textarea {
+  background: #0a0305 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fafafa !important;
+  border-radius: 10px;
+}
+
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder {
+  color: #78716c !important;
+}
+
+.admin-shell input:focus,
+.admin-shell select:focus,
+.admin-shell textarea:focus {
+  outline: none !important;
+  border-color: var(--admin-red) !important;
+  box-shadow: 0 0 0 1px rgba(255, 46, 99, 0.35);
+}
+
+.admin-shell input[type='checkbox'] {
+  accent-color: var(--admin-red);
+}
+
+.admin-shell table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-shell thead {
+  background: #16060a;
+  color: var(--admin-muted);
+}
+
+.admin-shell th {
+  padding: 0.8rem 1rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-shell td {
+  padding: 0.9rem 1rem;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.admin-shell tbody tr {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-shell tbody tr:hover {
+  background: var(--admin-hover);
+}
+
+.admin-btn-primary {
+  background: var(--admin-red);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.admin-btn-primary:hover {
+  background: var(--admin-red-deep);
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-ghost {
+  background: transparent;
+  color: var(--admin-muted);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+}
+
+.admin-btn-ghost:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: #0a0305;
+  border: 1px dashed rgba(255, 46, 99, 0.28);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #d6d3d1;
+  cursor: pointer;
+}
+
+.admin-file:hover {
+  border-color: var(--admin-red);
+}
+
+.admin-skel {
+  background: linear-gradient(90deg, #160608 0%, #241016 50%, #160608 100%);
+  background-size: 200% 100%;
+  animation: admin-skel 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes admin-skel {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }

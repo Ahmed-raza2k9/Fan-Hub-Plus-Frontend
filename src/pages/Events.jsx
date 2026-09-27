@@ -3,16 +3,73 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Tag, ArrowRight, Search, Ticket, Flame, Sparkles, CalendarX } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import EmptyState from '../components/EmptyState';
+import { useAuth } from '../context/AuthContext';
+import { adminApi } from '../services/api';
 
 export default function Events() {
-  const { events } = useData();
+  const { events: allEvents } = useData();
+  const { token } = useAuth();
 
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [isNearbyMode, setIsNearbyMode] = useState(false);
+  const [nearbyEvents, setNearbyEvents] = useState([]);
+  const [locationStatus, setLocationStatus] = useState('idle'); // idle, loading, success, denied, error
+  const [locationErrorMsg, setLocationErrorMsg] = useState('');
 
   const filterTabs = ['All', 'Conventions', 'Meetups', 'Live Stream', 'Competitions'];
 
-  const filteredEvents = (events || []).filter((evt) => {
+  const getNearbyEvents = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('error');
+      setLocationErrorMsg('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLocationStatus('loading');
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const data = await adminApi.getNearbyEvents(latitude, longitude, 50);
+          if (data.success) {
+            setNearbyEvents(data.events);
+            setLocationStatus('success');
+            setIsNearbyMode(true);
+          } else {
+            setLocationStatus('error');
+            setLocationErrorMsg(data.message || 'Failed to fetch nearby events.');
+          }
+        } catch (err) {
+          setLocationStatus('error');
+          setLocationErrorMsg('Network error while finding nearby events.');
+        }
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationStatus('denied');
+          setLocationErrorMsg('Location permission is required for nearby sorting.');
+        } else {
+          setLocationStatus('error');
+          setLocationErrorMsg('Failed to determine your location. Please try again.');
+        }
+      }
+    );
+  };
+
+  const toggleNearbyMode = () => {
+    if (isNearbyMode) {
+      setIsNearbyMode(false);
+      setLocationStatus('idle');
+    } else {
+      getNearbyEvents();
+    }
+  };
+
+  const currentEvents = isNearbyMode ? nearbyEvents : (allEvents || []);
+
+  const filteredEvents = currentEvents.filter((evt) => {
     const catName = typeof evt.category === 'object' ? evt.category?.name : evt.category;
     const catStr = String(catName || '').toLowerCase();
     const matchesFilter =
@@ -26,7 +83,7 @@ export default function Events() {
     return matchesFilter && matchesSearch;
   });
 
-  const featuredEvent = events?.find((e) => e.featured) || events?.[0];
+  const featuredEvent = allEvents?.find((e) => e.featured || e.isFeatured) || allEvents?.[0];
 
   return (
     <div className="space-y-12 pb-20 max-w-7xl mx-auto">
@@ -90,7 +147,10 @@ export default function Events() {
             </h2>
           </div>
 
-          <div className="relative rounded-3xl overflow-hidden border border-zinc-200 dark:border-red-500/40 bg-white dark:bg-gradient-to-b dark:from-[#14080b] dark:via-[#090b10] dark:to-[#050608] shadow-[0_8px_30px_rgba(225,29,72,0.06)] dark:shadow-[0_0_40px_rgba(220,38,38,0.18)] hover:border-red-400 transition-all duration-500 flex flex-col lg:flex-row group">
+          <Link
+            to={`/events/${featuredEvent.slug}`}
+            className="relative rounded-3xl overflow-hidden border border-zinc-200 dark:border-red-500/40 bg-white dark:bg-gradient-to-b dark:from-[#14080b] dark:via-[#090b10] dark:to-[#050608] shadow-[0_8px_30px_rgba(225,29,72,0.06)] dark:shadow-[0_0_40px_rgba(220,38,38,0.18)] hover:border-red-400 transition-all duration-500 flex flex-col lg:flex-row group block"
+          >
             <div className="lg:w-1/2 aspect-video lg:aspect-auto relative min-h-[240px] sm:min-h-[320px] overflow-hidden">
               <img
                 src={featuredEvent.image}
@@ -117,7 +177,8 @@ export default function Events() {
                     {typeof featuredEvent.category === 'object' ? featuredEvent.category?.name : featuredEvent.category || 'Convention'}
                   </span>
                   <span className="text-xs text-zinc-700 dark:text-white font-mono font-bold">
-                    {featuredEvent.startDate} — {featuredEvent.endDate}
+                    {featuredEvent.startDate ? new Date(featuredEvent.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                    {featuredEvent.endDate ? ` — ${new Date(featuredEvent.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
                   </span>
                 </div>
 
@@ -147,22 +208,20 @@ export default function Events() {
               </div>
 
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <Link
-                  to={`/events/${featuredEvent.slug}`}
+                <span
                   className="px-6 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs shadow-xl shadow-red-600/30 flex items-center justify-center gap-2 transition-all hover:scale-105 border border-red-400/40 text-center"
                 >
                   <Ticket className="w-4 h-4" />
                   <span>Get Tickets & Passes</span>
-                </Link>
-                <Link
-                  to={`/events/${featuredEvent.slug}`}
+                </span>
+                <span
                   className="px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/20 hover:border-red-500 hover:bg-zinc-100 dark:hover:bg-white/[0.04] text-zinc-800 dark:text-white text-xs font-bold transition-all text-center"
                 >
                   View Details
-                </Link>
+                </span>
               </div>
             </div>
-          </div>
+          </Link>
         </section>
       )}
 
@@ -171,24 +230,54 @@ export default function Events() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white font-display">
-              Upcoming Fandom Conventions & Meetups
+              {isNearbyMode ? 'Events Near You' : 'Upcoming Fandom Conventions & Meetups'}
             </h2>
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Browse upcoming summits, dates, ticket prices and venue locations.
+              {isNearbyMode 
+                ? 'Showing events ordered by distance from your current location.'
+                : 'Browse upcoming summits, dates, ticket prices and venue locations.'}
             </p>
           </div>
 
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search city, venue or event..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-black/60 border border-zinc-200 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-red-500 transition-colors shadow-sm dark:shadow-none"
-            />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={toggleNearbyMode}
+              disabled={locationStatus === 'loading'}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border ${
+                isNearbyMode
+                  ? 'bg-red-600 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]'
+                  : 'bg-white dark:bg-[#120508] text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-white/10 hover:border-red-500/50'
+              } disabled:opacity-50`}
+            >
+              <MapPin className="w-4 h-4" />
+              {locationStatus === 'loading' ? 'Finding events...' : isNearbyMode ? 'Nearby Events Active' : 'Use My Location'}
+            </button>
+
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search city, venue or event..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-black/60 border border-zinc-200 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-red-500 transition-colors shadow-sm dark:shadow-none"
+              />
+            </div>
           </div>
         </div>
+
+        {(locationStatus === 'error' || locationStatus === 'denied') && (
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30">
+            <p className="text-sm font-bold text-red-600 dark:text-red-400">
+              {locationErrorMsg}
+            </p>
+            {locationStatus === 'denied' && (
+              <p className="text-xs text-red-500/80 dark:text-red-400/80 mt-1">
+                Please enable location access in your browser settings to use this feature.
+              </p>
+            )}
+          </div>
+        )}
 
         {filteredEvents.length === 0 ? (
           <EmptyState
@@ -201,9 +290,10 @@ export default function Events() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((evt) => (
-              <article
+              <Link
                 key={evt._id || evt.id}
-                className="group rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/[0.08] hover:border-red-500/70 bg-white dark:bg-gradient-to-b dark:from-[#13080c] dark:via-[#090b10] dark:to-[#06070a] transition-all duration-400 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_12px_36px_rgba(220,38,38,0.18)] dark:hover:shadow-[0_12px_36px_rgba(220,38,38,0.22)] flex flex-col justify-between"
+                to={`/events/${evt.slug}`}
+                className="group rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/[0.08] hover:border-red-500/70 bg-white dark:bg-gradient-to-b dark:from-[#13080c] dark:via-[#090b10] dark:to-[#06070a] transition-all duration-400 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_12px_36px_rgba(220,38,38,0.18)] dark:hover:shadow-[0_12px_36px_rgba(220,38,38,0.22)] flex flex-col justify-between block"
               >
                 <div>
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
@@ -217,13 +307,21 @@ export default function Events() {
                     
                     {/* White Date Chip */}
                     <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-white text-red-600 text-[10px] font-mono font-black shadow-md">
-                      {evt.startDate}
+                      {evt.startDate ? new Date(evt.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                     </span>
 
                     {/* Red Category Pill */}
                     <span className="absolute top-3 right-3 px-2.5 py-1 rounded-md bg-red-600/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider shadow-md">
                       {typeof evt.category === 'object' ? evt.category?.name : evt.category}
                     </span>
+                    
+                    {/* Distance Badge (if nearby mode) */}
+                    {isNearbyMode && evt.distance !== undefined && (
+                      <span className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-white text-[10px] font-bold border border-white/20 shadow-md flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-red-500" />
+                        {evt.distance.toFixed(1)} km away
+                      </span>
+                    )}
                   </div>
 
                   <div className="p-5 space-y-3">
@@ -243,15 +341,14 @@ export default function Events() {
                 </div>
 
                 <div className="p-5 pt-0">
-                  <Link
-                    to={`/events/${evt.slug}`}
+                  <span
                     className="w-full py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-600 dark:bg-red-600/15 dark:hover:bg-red-600 border border-red-200 dark:border-red-500/30 hover:border-red-500 text-xs font-black text-red-600 hover:text-white dark:text-red-400 dark:hover:text-white flex items-center justify-center gap-1.5 transition-all shadow-sm group/btn"
                   >
                     <span>Event Passes & Details</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                  </Link>
+                  </span>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}

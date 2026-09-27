@@ -64,22 +64,6 @@ export default function Login() {
     }
   };
 
-  const handleQuickLogin = async (demoEmail) => {
-    setIsSubmitting(true);
-    setServerError('');
-    const res = await login(demoEmail, 'fanhub2026');
-    setIsSubmitting(false);
-    if (res.success) {
-      if (res.user?.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
-    } else {
-      setServerError(res.error || 'Quick login failed.');
-    }
-  };
-
   return (
     <div className="relative min-h-[calc(100vh-5rem)] w-full -mt-6 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-8 py-4 sm:py-6 flex flex-col justify-between overflow-hidden bg-[#070204]">
       {/* Background Image Layer with Crimson & Ruby Red Glow */}
@@ -244,31 +228,6 @@ export default function Login() {
               </button>
             </div>
           </form>
-
-          {/* Instant Demo Sign-In */}
-          <div className="pt-2.5 border-t border-white/10 mt-3.5 space-y-1.5">
-            <p className="text-[10px] text-zinc-400 text-center uppercase tracking-widest font-black">
-              Instant Demo Sign-In
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('alex.hunter@fanhub.io')}
-                className="flex items-center justify-center gap-1.5 p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-white border border-red-500/40 text-[11px] font-bold transition-all"
-              >
-                <User className="w-3 h-3 text-red-400" />
-                <span>User Demo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('marcus.vance@fanhub.io')}
-                className="flex items-center justify-center gap-1.5 p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-white border border-red-500/40 text-[11px] font-bold transition-all"
-              >
-                <Shield className="w-3 h-3 text-red-400" />
-                <span>Admin Demo</span>
-              </button>
-            </div>
-          </div>
 
           {/* Bottom Register Text */}
           <div className="text-center text-[11px] text-zinc-300 pt-3">

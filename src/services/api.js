@@ -71,6 +71,10 @@ export const adminApi = {
   // Analytics
   getAnalytics: () => request('/admin/analytics', { method: 'GET' }),
 
+  // Ratings
+  getRatings: () => request('/admin/ratings', { method: 'GET' }),
+  deleteRating: (id) => request(`/admin/ratings/${id}`, { method: 'DELETE' }),
+
   // Users
   getUsers: () => request('/users', { method: 'GET' }),
   getUser: (id) => request(`/users/${id}`, { method: 'GET' }),
@@ -123,7 +127,10 @@ export const adminApi = {
   getFeedback: () => request('/admin/feedback', { method: 'GET' }),
   getFeedbackById: (id) => request(`/admin/feedback/${id}`, { method: 'GET' }),
   updateFeedback: (id, data) => request(`/admin/feedback/${id}`, { method: 'PUT', body: data }),
-  deleteFeedback: (id) => request(`/admin/feedback/${id}`, { method: 'DELETE' })
+  deleteFeedback: (id) => request(`/admin/feedback/${id}`, { method: 'DELETE' }),
+
+  // Location Geocoding
+  searchLocation: (query) => request(`/location/search?query=${encodeURIComponent(query)}`, { method: 'GET' })
 };
 
 // ==================== USER API ====================
@@ -133,6 +140,7 @@ export const userApi = {
   submitFeedback: (data) => request('/feedback', { method: 'POST', body: data }),
   getBookmarks: () => request('/bookmarks', { method: 'GET' }),
   addBookmark: (data) => request('/bookmarks', { method: 'POST', body: data }),
+  updateBookmarkNote: (id, note) => request(`/bookmarks/${id}`, { method: 'PUT', body: { note } }),
   deleteBookmark: (id) => request(`/bookmarks/${id}`, { method: 'DELETE' }),
   getRatings: () => request('/ratings', { method: 'GET' }),
   addRating: (data) => request('/ratings', { method: 'POST', body: data })

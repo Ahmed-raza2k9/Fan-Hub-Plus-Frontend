@@ -15,7 +15,6 @@ export function DataProvider({ children }) {
 
   const [bookmarks, setBookmarks] = useState([]);
   const [ratings, setRatings] = useState({});
-  const [favoriteCategories, setFavoriteCategories] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -76,12 +75,22 @@ export function DataProvider({ children }) {
 
         if (Array.isArray(bkmRes?.bookmarks)) {
           setBookmarks(
-            bkmRes.bookmarks.map((b) => ({
-              id: b._id || b.id,
-              contentId: typeof b.content === 'object' ? b.content?._id : b.content,
-              contentSlug: typeof b.content === 'object' ? b.content?.slug : b.contentSlug,
-              note: b.note || ''
-            }))
+            bkmRes.bookmarks.map((b) => {
+              const cObj = typeof b.content === 'object' ? b.content : null;
+              const charObj = typeof b.character === 'object' ? b.character : null;
+              const merchObj = typeof b.merchandise === 'object' ? b.merchandise : null;
+              return {
+                id: b._id || b.id,
+                contentId: cObj?._id || cObj?.id || b.content,
+                contentSlug: cObj?.slug || b.contentSlug,
+                characterId: charObj?._id || charObj?.id || b.character,
+                characterSlug: charObj?.slug,
+                merchandiseId: merchObj?._id || merchObj?.id || b.merchandise,
+                merchandiseSlug: merchObj?.slug,
+                note: b.note || '',
+                raw: b
+              };
+            })
           );
         } else {
           setBookmarks([]);
@@ -90,8 +99,12 @@ export function DataProvider({ children }) {
         if (Array.isArray(ratRes?.ratings)) {
           const rMap = {};
           ratRes.ratings.forEach((r) => {
-            const slug = typeof r.content === 'object' ? r.content?.slug : r.contentSlug;
-            if (slug) rMap[slug] = r.rating;
+            const cObj = typeof r.content === 'object' ? r.content : null;
+            const slug = cObj?.slug || r.contentSlug;
+            const contentId = cObj?._id || cObj?.id || r.content;
+            const entry = { id: r._id || r.id, rating: r.rating, slug, contentId };
+            if (slug) rMap[slug] = entry;
+            if (contentId) rMap[contentId] = entry;
           });
           setRatings(rMap);
         } else {
@@ -447,80 +460,225 @@ export function DataProvider({ children }) {
 
   // ================= BOOKMARKS & RATINGS =================
   const isBookmarked = (slugOrId) => {
-    if (!bookmarks || !Array.isArray(bookmarks)) return false;
-    return bookmarks.some((b) => b && (b.contentSlug === slugOrId || b.contentId === slugOrId || b.id === slugOrId));
-  };
-
-  const toggleBookmark = async (slugOrId, note = '') => {
-    const targetItem = contentList.find((c) => c.slug === slugOrId || c.id === slugOrId || c._id === slugOrId);
-    const targetSlug = targetItem?.slug || slugOrId;
-    const targetId = targetItem?.id || targetItem?._id || slugOrId;
-
-    const existing = bookmarks.find((b) => b.contentSlug === targetSlug || b.contentId === targetId);
-
-    if (existing) {
-      setBookmarks((prev) => prev.filter((b) => b.contentSlug !== targetSlug && b.contentId !== targetId));
-      if (existing.id && !existing.id.startsWith('temp-')) {
-        await userApi.deleteBookmark(existing.id).catch(() => null);
-      }
-    } else {
-      const tempBookmark = { id: `temp-${Date.now()}`, contentId: targetId, contentSlug: targetSlug, note };
-      setBookmarks((prev) => [tempBookmark, ...prev]);
-
-      try {
-        const res = await userApi.addBookmark({ content: targetId, note });
-        if (res.success && res.bookmark) {
-          setBookmarks((prev) =>
-            prev.map((b) =>
-              b.contentSlug === targetSlug || b.contentId === targetId
-                ? { id: res.bookmark._id || res.bookmark.id, contentId: targetId, contentSlug: targetSlug, note }
-                : b
-            )
-          );
-        }
-      } catch (err) {
-        console.error('Add bookmark error:', err);
-      }
-    }
-  };
-
-  const updateBookmarkNote = (slugOrId, noteText) => {
-    setBookmarks((prev) =>
-      prev.map((b) => (b.contentSlug === slugOrId || b.contentId === slugOrId ? { ...b, note: noteText } : b))
+    if (!bookmarks || !Array.isArray(bookmarks) || !slugOrId) return false;
+    return bookmarks.some(
+      (b) =>
+        b &&
+        (b.contentSlug === slugOrId ||
+          b.contentId === slugOrId ||
+          b.characterId === slugOrId ||
+          b.characterSlug === slugOrId ||
+          b.merchandiseId === slugOrId ||
+          b.merchandiseSlug === slugOrId ||
+          b.id === slugOrId ||
+          b.raw?._id === slugOrId ||
+          b.raw?.item === slugOrId ||
+          (typeof b.raw?.content === 'object' && b.raw.content?._id === slugOrId) ||
+          (typeof b.raw?.character === 'object' && b.raw.character?._id === slugOrId) ||
+          (typeof b.raw?.merchandise === 'object' && b.raw.merchandise?._id === slugOrId))
     );
   };
 
-  const setContentRating = async (slugOrId, ratingVal) => {
-    const targetItem = contentList.find((c) => c.slug === slugOrId || c.id === slugOrId || c._id === slugOrId);
-    const targetSlug = targetItem?.slug || slugOrId;
-    const targetId = targetItem?.id || targetItem?._id || slugOrId;
+  const toggleBookmark = async (slugOrId, note = '', itemType = null) => {
+    const token = localStorage.getItem('fanhub_token');
+    if (!token) {
+      window.dispatchEvent(new Event('fanhub_require_login'));
+      return { success: false, error: 'Please log in to bookmark items' };
+    }
 
-    setRatings((prev) => ({ ...prev, [targetSlug]: ratingVal }));
+    const targetContent = (contentList || []).find(
+      (c) => c.slug === slugOrId || c.id === slugOrId || c._id === slugOrId
+    );
+    const targetChar = (characters || []).find(
+      (c) => c.slug === slugOrId || c.id === slugOrId || c._id === slugOrId
+    );
+    const targetMerch = (merchandise || []).find(
+      (m) => m.slug === slugOrId || m.id === slugOrId || m._id === slugOrId
+    );
 
-    try {
-      await userApi.addRating({ content: targetId, rating: ratingVal }).catch(() => null);
-    } catch (err) {
-      console.error('Add rating error:', err);
+    let targetType = itemType || 'Content';
+    let targetId = slugOrId;
+
+    if (targetContent) {
+      targetType = 'Content';
+      targetId = targetContent._id || targetContent.id || slugOrId;
+    } else if (targetChar) {
+      targetType = 'Character';
+      targetId = targetChar._id || targetChar.id || slugOrId;
+    } else if (targetMerch) {
+      targetType = 'Merchandise';
+      targetId = targetMerch._id || targetMerch.id || slugOrId;
+    }
+
+    const existing = bookmarks.find(
+      (b) =>
+        b &&
+        (b.contentSlug === slugOrId ||
+          b.contentId === targetId ||
+          b.characterId === targetId ||
+          b.characterSlug === slugOrId ||
+          b.merchandiseId === targetId ||
+          b.merchandiseSlug === slugOrId ||
+          b.id === slugOrId ||
+          b.raw?._id === slugOrId ||
+          b.raw?.item === targetId)
+    );
+
+    if (existing && !note) {
+      setBookmarks((prev) => prev.filter((b) => b !== existing && b.id !== existing.id));
+      try {
+        await userApi.deleteBookmark(existing.id || targetId);
+      } catch (err) {
+        console.error('Delete bookmark error:', err);
+        setBookmarks((prev) => [...prev, existing]);
+      }
+    } else {
+      const tempId = existing ? existing.id : `temp-${Date.now()}`;
+      const newBkm = {
+        id: tempId,
+        itemType: targetType,
+        contentId: targetType === 'Content' ? targetId : null,
+        contentSlug: targetContent?.slug || null,
+        characterId: targetType === 'Character' ? targetId : null,
+        characterSlug: targetChar?.slug || null,
+        merchandiseId: targetType === 'Merchandise' ? targetId : null,
+        merchandiseSlug: targetMerch?.slug || null,
+        note,
+        raw: existing ? { ...existing.raw, note } : null
+      };
+
+      if (existing) {
+        setBookmarks((prev) => prev.map((b) => (b.id === existing.id ? newBkm : b)));
+      } else {
+        setBookmarks((prev) => [newBkm, ...prev]);
+      }
+
+      try {
+        const payload = { itemType: targetType, itemId: targetId, note };
+        if (targetType === 'Content') payload.content = targetId;
+        if (targetType === 'Character') payload.character = targetId;
+        if (targetType === 'Merchandise') payload.merchandise = targetId;
+
+        const res = await userApi.addBookmark(payload);
+        if (res.success && res.bookmark) {
+          const cObj = typeof res.bookmark.content === 'object' ? res.bookmark.content : null;
+          const charObj = typeof res.bookmark.character === 'object' ? res.bookmark.character : null;
+          const merchObj = typeof res.bookmark.merchandise === 'object' ? res.bookmark.merchandise : null;
+          const serverBkm = {
+            id: res.bookmark._id || res.bookmark.id,
+            itemType: res.bookmark.itemType || targetType,
+            contentId: cObj?._id || cObj?.id || res.bookmark.content,
+            contentSlug: cObj?.slug || targetContent?.slug,
+            characterId: charObj?._id || charObj?.id || res.bookmark.character,
+            characterSlug: charObj?.slug || targetChar?.slug,
+            merchandiseId: merchObj?._id || merchObj?.id || res.bookmark.merchandise,
+            merchandiseSlug: merchObj?.slug || targetMerch?.slug,
+            note: res.bookmark.note || note,
+            raw: res.bookmark
+          };
+          setBookmarks((prev) => prev.map((b) => (b.id === tempId ? serverBkm : b)));
+        }
+      } catch (err) {
+        console.error('Add/update bookmark error:', err);
+        if (!existing) {
+          setBookmarks((prev) => prev.filter((b) => b.id !== tempId));
+        }
+      }
     }
   };
 
-  const isFavoriteCategory = (catNameOrId) => {
-    if (!favoriteCategories || !Array.isArray(favoriteCategories)) return false;
-    const nameStr = String(catNameOrId || '').toLowerCase();
-    return favoriteCategories.some((c) => String(c || '').toLowerCase() === nameStr);
+  const updateBookmarkNote = async (slugOrId, noteText) => {
+    const token = localStorage.getItem('fanhub_token');
+    if (!token) {
+      window.dispatchEvent(new Event('fanhub_require_login'));
+      return { success: false, error: 'Please log in to update bookmark note' };
+    }
+
+    setBookmarks((prev) =>
+      prev.map((b) =>
+        b.contentSlug === slugOrId ||
+        b.contentId === slugOrId ||
+        b.characterSlug === slugOrId ||
+        b.characterId === slugOrId ||
+        b.merchandiseSlug === slugOrId ||
+        b.merchandiseId === slugOrId ||
+        b.id === slugOrId ||
+        b.raw?._id === slugOrId
+          ? { ...b, note: noteText, raw: b.raw ? { ...b.raw, note: noteText } : b.raw }
+          : b
+      )
+    );
+
+    try {
+      const res = await userApi.updateBookmarkNote(slugOrId, noteText);
+      if (res.success && res.bookmark) {
+        const updated = res.bookmark;
+        setBookmarks((prev) =>
+          prev.map((b) =>
+            b.id === updated._id || b.id === slugOrId || b.contentSlug === slugOrId
+              ? { ...b, note: updated.note || noteText, raw: updated }
+              : b
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Update bookmark note error:', err);
+    }
   };
 
-  const toggleFavoriteCategory = (catNameOrId) => {
-    if (!catNameOrId) return;
-    const nameStr = String(catNameOrId);
-    setFavoriteCategories((prev) => {
-      const exists = prev.some((c) => String(c || '').toLowerCase() === nameStr.toLowerCase());
-      if (exists) {
-        return prev.filter((c) => String(c || '').toLowerCase() !== nameStr.toLowerCase());
-      } else {
-        return [...prev, nameStr];
+  const getUserRating = (slugOrId) => {
+    if (!ratings || !slugOrId) return null;
+    const entry = ratings[slugOrId];
+    if (!entry) return null;
+    if (typeof entry === 'number') return entry;
+    if (typeof entry === 'object') return entry.rating || entry.score || entry.value || null;
+    return null;
+  };
+
+  const hasUserRated = (slugOrId) => {
+    return getUserRating(slugOrId) !== null;
+  };
+
+  const setContentRating = async (slugOrId, ratingVal) => {
+    const token = localStorage.getItem('fanhub_token');
+    if (!token) {
+      window.dispatchEvent(new Event('fanhub_require_login'));
+      return { success: false, error: 'Please log in to submit a rating' };
+    }
+
+    const targetContent = contentList.find(
+      (c) => c.slug === slugOrId || c.id === slugOrId || c._id === slugOrId
+    );
+    const targetId = targetContent?.id || targetContent?._id || slugOrId;
+    const targetSlug = targetContent?.slug || slugOrId;
+
+    if (hasUserRated(targetSlug) || hasUserRated(targetId)) {
+      return { success: false, error: 'You have already submitted a rating for this item.' };
+    }
+
+    try {
+      const res = await userApi.addRating({ content: targetId, rating: ratingVal });
+      if (res.success && res.rating) {
+        const ratingNum = res.rating.rating || res.rating.score || ratingVal;
+        const entry = {
+          id: res.rating._id || res.rating.id,
+          rating: ratingNum,
+          contentId: targetId,
+          slug: targetSlug,
+          content: targetContent
+        };
+        setRatings((prev) => ({
+          ...prev,
+          [targetSlug]: entry,
+          [targetId]: entry
+        }));
+        return { success: true, rating: entry };
       }
-    });
+      return { success: false, error: res.message || 'Failed to submit rating' };
+    } catch (err) {
+      const errorMsg = err.data?.message || err.message || 'Rating submission failed';
+      return { success: false, error: errorMsg };
+    }
   };
 
   return (
@@ -536,9 +694,6 @@ export function DataProvider({ children }) {
         usersList,
         bookmarks,
         ratings,
-        favoriteCategories,
-        isFavoriteCategory,
-        toggleFavoriteCategory,
         loading,
         error,
         refreshData: fetchAllData,
@@ -546,6 +701,8 @@ export function DataProvider({ children }) {
         isBookmarked,
         toggleBookmark,
         updateBookmarkNote,
+        getUserRating,
+        hasUserRated,
         setContentRating,
         setRating: setContentRating,
 

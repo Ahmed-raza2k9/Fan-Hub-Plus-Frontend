@@ -97,11 +97,14 @@ export default function EventDetails() {
             <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-zinc-200">
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-red-500" />
-                <span className="font-mono font-bold text-white">{event.startDate} — {event.endDate}</span>
+                <span className="font-mono font-bold text-white">
+                  {event.startDate ? new Date(event.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                  {event.endDate && event.endDate !== event.startDate ? ` — ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-red-500" />
-                <span>{event.venue}, {event.city}</span>
+                <span>{[event.venue, event.city].filter(Boolean).join(', ')}</span>
               </div>
             </div>
 
@@ -162,6 +165,43 @@ export default function EventDetails() {
         </div>
 
         <div className="lg:col-span-5 space-y-6">
+
+          {/* Map Panel — shown only when coordinates exist */}
+          {event.latitude && event.longitude && (
+            <div className="rounded-3xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-gradient-to-b dark:from-[#13080c] dark:via-[#090b10] dark:to-[#06070a] shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-none overflow-hidden">
+              <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+                <h2 className="text-lg font-black text-zinc-900 dark:text-white font-display flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-red-500" />
+                  Venue Location
+                </h2>
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${event.latitude}&mlon=${event.longitude}#map=15/${event.latitude}/${event.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-red-400 hover:text-red-300 font-bold transition-colors"
+                >
+                  Open in Maps ↗
+                </a>
+              </div>
+              <div className="relative w-full" style={{ height: '240px' }}>
+                <iframe
+                  title="Event Venue Map"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${event.longitude - 0.01},${event.latitude - 0.01},${event.longitude + 0.01},${event.latitude + 0.01}&layer=mapnik&marker=${event.latitude},${event.longitude}`}
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                />
+              </div>
+              <div className="px-5 py-3 border-t border-zinc-100 dark:border-white/[0.06]">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">{event.venue}</span>
+                  {event.address && <span> · {event.address}</span>}
+                  {event.city && <span> · {event.city}</span>}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Event Atmosphere Gallery */}
           <div className="p-5 sm:p-6 rounded-3xl border border-zinc-200/80 dark:border-white/[0.08] bg-white dark:bg-gradient-to-b dark:from-[#13080c] dark:via-[#090b10] dark:to-[#06070a] shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-none space-y-4">
             <h2 className="text-xl font-black text-zinc-900 dark:text-white font-display">Event Atmosphere</h2>
             <div className="grid grid-cols-2 gap-3">

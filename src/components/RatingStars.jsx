@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 
-export default function RatingStars({ value = 0, onChange, readOnly = false, size = 'md' }) {
+export default function RatingStars({ value = 0, onChange, readOnly = false, size = 'md', tone = 'amber' }) {
   const [hoverValue, setHoverValue] = useState(0);
 
   const starSizes = {
@@ -30,7 +30,9 @@ export default function RatingStars({ value = 0, onChange, readOnly = false, siz
             <Star
               className={`${starSizes[size] || starSizes.md} ${
                 isFilled
-                  ? 'fill-amber-400 text-amber-400'
+                  ? tone === 'red'
+                    ? 'fill-[#ff2e63] text-[#ff2e63]'
+                    : 'fill-amber-400 text-amber-400'
                   : 'text-zinc-600 hover:text-zinc-400'
               }`}
             />

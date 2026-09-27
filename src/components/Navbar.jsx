@@ -20,32 +20,32 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import SearchBar from './SearchBar';
 import ThemeToggle from "../components/ThemeToggle";
-import AuthModal from './AuthModal';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  // Industry-level Auth Modal State
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState('login');
-
-  const { currentUser, isAuthenticated, isAdmin, logout, switchRole } = useAuth();
+  const { currentUser, isAuthenticated, isAdmin, logout, openAuthModal } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
   const isAdminSide = location.pathname.startsWith('/admin');
 
+  const userMenuClasses = isDark
+    ? 'bg-[#1a0509] border-red-500/40 text-white'
+    : 'bg-white border-zinc-200 text-zinc-900 shadow-lg';
+  const mobileMenuClasses = isDark
+    ? 'bg-gradient-to-b from-[#0a0204] to-black border-red-500/20 text-white'
+    : 'bg-white border-zinc-200 text-zinc-900 shadow-lg';
+
   const openLoginModal = () => {
-    setAuthModalMode('login');
-    setAuthModalOpen(true);
+    openAuthModal('login');
     setIsMobileMenuOpen(false);
   };
 
   const openRegisterModal = () => {
-    setAuthModalMode('register');
-    setAuthModalOpen(true);
+    openAuthModal('register');
     setIsMobileMenuOpen(false);
   };
 
@@ -126,29 +126,17 @@ export default function Navbar() {
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-[#1a0509] border border-red-500/40 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 backdrop-blur-xl">
-                    <div className="px-4 py-2 border-b border-red-500/20">
-                      <p className="text-xs font-bold text-white truncate">{currentUser?.name}</p>
-                      <p className="text-[11px] text-white/60 truncate">{currentUser?.email}</p>
-                      <div className="mt-1.5 flex items-center justify-between">
-                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-black/40 text-red-300 border border-red-500/30">
-                          Role: {currentUser?.role}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => switchRole(currentUser?.role === 'admin' ? 'user' : 'admin')}
-                          className="text-[10px] text-white/70 hover:text-white underline"
-                        >
-                          Switch
-                        </button>
-                      </div>
+                  <div className={`absolute right-0 mt-2 w-56 border rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 backdrop-blur-xl ${userMenuClasses}`}>
+                    <div className={`px-4 py-2 border-b ${isDark ? 'border-red-500/20' : 'border-zinc-200'}`}>
+                      <p className="text-xs font-bold truncate">{currentUser?.name}</p>
+                      <p className={`text-[11px] truncate ${isDark ? 'text-white/60' : 'text-zinc-500'}`}>{currentUser?.email}</p>
                     </div>
 
                     <div className="py-1">
                       <Link
                         to="/dashboard"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white/85 hover:text-white hover:bg-red-900/40"
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-medium ${isDark ? 'text-white/85 hover:text-white hover:bg-red-900/40' : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100'}`}
                       >
                         <Flame className="w-4 h-4 text-red-400" />
                         Dashboard
@@ -156,24 +144,24 @@ export default function Navbar() {
                       <Link
                         to="/profile"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white/85 hover:text-white hover:bg-red-900/40"
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-medium ${isDark ? 'text-white/85 hover:text-white hover:bg-red-900/40' : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100'}`}
                       >
-                        <User className="w-4 h-4 text-white/70" />
+                        <User className={`w-4 h-4 ${isDark ? 'text-white/70' : 'text-zinc-600'}`} />
                         Profile Settings
                       </Link>
                       <Link
                         to="/bookmarks"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white/85 hover:text-white hover:bg-red-900/40"
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-medium ${isDark ? 'text-white/85 hover:text-white hover:bg-red-900/40' : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100'}`}
                       >
-                        <Bookmark className="w-4 h-4 text-white/70" />
+                        <Bookmark className={`w-4 h-4 ${isDark ? 'text-white/70' : 'text-zinc-600'}`} />
                         My Bookmarks
                       </Link>
                       {isAdmin && (
                         <Link
                           to="/admin"
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-red-300 hover:text-white hover:bg-red-900/40"
+                          className={`flex items-center gap-2 px-4 py-2 text-xs font-medium ${isDark ? 'text-red-300 hover:text-white hover:bg-red-900/40' : 'text-red-600 hover:text-red-700 hover:bg-red-50'}`}
                         >
                           <Shield className="w-4 h-4 text-red-400" />
                           Admin Console
@@ -181,11 +169,11 @@ export default function Navbar() {
                       )}
                     </div>
 
-                    <div className="pt-1 border-t border-red-500/20">
+                    <div className={`pt-1 border-t ${isDark ? 'border-red-500/20' : 'border-zinc-200'}`}>
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-xs font-medium text-rose-300 hover:text-white hover:bg-red-900/40 text-left"
+                        className={`w-full flex items-center gap-2 px-4 py-2 text-xs font-medium text-left ${isDark ? 'text-rose-300 hover:text-white hover:bg-red-900/40' : 'text-red-600 hover:text-red-700 hover:bg-red-50'}`}
                       >
                         <LogOut className="w-4 h-4" />
                         Log Out
@@ -199,7 +187,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={openLoginModal}
-                  className="px-2 xs:px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-red-200 bg-red-600/20 hover:bg-red-600 hover:text-white rounded-full border border-red-500/70 transition-all shadow-[0_0_10px_rgba(239,68,68,0.25)] hover:shadow-[0_0_15px_rgba(239,68,68,0.6)] whitespace-nowrap active:scale-95"
+                  className="px-2 xs:px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold text-red-600 dark:text-red-200 bg-red-50 dark:bg-red-600/20 hover:bg-red-600 hover:text-white rounded-full border border-red-200 dark:border-red-500/70 transition-all shadow-sm hover:shadow-[0_0_15px_rgba(239,68,68,0.6)] whitespace-nowrap active:scale-95"
                 >
                   Login
                 </button>
@@ -216,7 +204,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-              className="lg:hidden p-1.5 sm:p-2 rounded-xl text-white bg-white/5 hover:bg-red-600/20 border border-white/10 transition-colors shrink-0"
+              className={`lg:hidden p-1.5 sm:p-2 rounded-xl transition-colors shrink-0 ${isDark ? 'text-white bg-white/5 hover:bg-red-600/20 border border-white/10' : 'text-zinc-800 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200'}`}
               aria-label="Toggle navigation menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -226,10 +214,10 @@ export default function Navbar() {
 
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden absolute top-16 left-0 right-0 p-5 border-t border-b border-red-500/20 space-y-6 animate-in fade-in slide-in-from-top-2 duration-150 bg-gradient-to-b from-[#0a0204] to-black shadow-2xl backdrop-blur-3xl z-40">
+          <div className={`lg:hidden absolute top-16 left-0 right-0 p-5 border-t border-b space-y-6 animate-in fade-in slide-in-from-top-2 duration-150 shadow-2xl backdrop-blur-3xl z-40 ${mobileMenuClasses}`}>
             <SearchBar
               className="w-full"
-              inputClassName="w-full pl-10 pr-9 py-2.5 text-sm bg-transparent border border-red-500/30 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:border-red-500"
+              inputClassName={`w-full pl-10 pr-9 py-2.5 text-sm border rounded-2xl focus:outline-none focus:border-red-500 ${isDark ? 'bg-transparent border-red-500/30 text-white placeholder-white/50' : 'bg-zinc-50 border-zinc-200 text-zinc-900 placeholder-zinc-500'}`}
               placeholder="Search anime, games, characters..."
             />
 
@@ -239,7 +227,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={openLoginModal}
-                  className="flex-1 py-3 text-sm font-bold text-center text-red-200 bg-red-950/60 border border-red-500/60 rounded-xl hover:bg-red-900/60 transition-colors"
+                  className="flex-1 py-3 text-sm font-bold text-center text-red-700 dark:text-red-200 bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-500/60 rounded-xl hover:bg-red-600 hover:text-white transition-colors"
                 >
                   Login
                 </button>
@@ -254,25 +242,18 @@ export default function Navbar() {
             )}
 
             <div className="grid grid-cols-2 gap-3">
-              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Home</Link>
-              <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Explore</Link>
-              <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Categories</Link>
-              <Link to="/characters" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Characters</Link>
-              <Link to="/fan-creations" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Articles</Link>
-              <Link to="/events" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Events</Link>
-              <Link to="/media" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Media</Link>
-              <Link to="/merchandise" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold text-white hover:text-red-400 rounded-[14px] bg-transparent border border-white/10 hover:border-red-500/40 transition-colors">Merchandise</Link>
+              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Home</Link>
+              <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Explore</Link>
+              <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Categories</Link>
+              <Link to="/characters" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Characters</Link>
+              <Link to="/fan-creations" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Articles</Link>
+              <Link to="/events" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Events</Link>
+              <Link to="/media" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Media</Link>
+              <Link to="/merchandise" onClick={() => setIsMobileMenuOpen(false)} className={`px-5 py-3 text-sm font-bold rounded-[14px] border transition-colors ${isDark ? 'text-white hover:text-red-400 border-white/10 hover:border-red-500/40' : 'text-zinc-900 hover:text-red-600 border-zinc-200 hover:border-red-300 bg-zinc-50 hover:bg-red-50'}`}>Merchandise</Link>
             </div>
           </div>
         )}
       </div>
-
-      {/* Interactive Industry-Level Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        initialMode={authModalMode}
-      />
     </header>
   );
 }

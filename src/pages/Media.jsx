@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Play,
-  Download,
-  Image as ImageIcon,
   Headphones,
   Radio,
-  Search,
-  Share2,
-  Bookmark,
   Star,
   Eye,
-  Calendar,
-  Clock,
   Sparkles,
   Film,
-  Volume2,
   Flame,
   ArrowRight
 } from 'lucide-react';
@@ -32,7 +23,6 @@ export default function Media() {
   const filterTabs = [
     { id: 'all', label: 'All Media', icon: Sparkles },
     { id: 'videos', label: 'Videos & AMVs', icon: Film },
-    { id: 'wallpapers', label: '4K Wallpapers', icon: ImageIcon },
     { id: 'music', label: 'Soundtracks & OSTs', icon: Headphones },
     { id: 'podcasts', label: 'Fandom Podcasts', icon: Radio }
   ];
@@ -55,16 +45,7 @@ export default function Media() {
       description: vid.description || ''
     }));
 
-  const wallpapers = (contentList || [])
-    .filter((c) => c.contentType === 'image')
-    .map((wp) => ({
-      id: wp.id || wp._id,
-      title: wp.title,
-      category: wp.category,
-      resolution: '3840 × 2160 (4K)',
-      downloads: `${wp.viewCount || 0} Downloads`,
-      image: wp.thumbnail || wp.image || ''
-    }));
+
 
   const audioTracks = (contentList || [])
     .filter((c) => c.contentType === 'audio')
@@ -96,7 +77,7 @@ export default function Media() {
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-medium">
-            Stream high-bitrate trailers, download 4K UHD desktop & mobile wallpapers, and listen to orchestral fandom soundtracks.
+            Stream high-bitrate trailers, watch community AMVs, and listen to orchestral fandom soundtracks.
           </p>
 
           <div className="flex items-center gap-2 pt-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 w-full">
@@ -215,79 +196,7 @@ export default function Media() {
         </section>
       )}
 
-      {/* =========================================================
-          WALLPAPERS SECTION (4K UHD)
-      ========================================================= */}
-      {(activeTab === 'all' || activeTab === 'wallpapers') && (
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white tracking-tight font-display flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-red-500" />
-                <span>Popular Wallpapers (4K Ultra HD)</span>
-              </h2>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">Desktop and mobile high-resolution fan downloads</p>
-            </div>
-          </div>
 
-          {wallpapers.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {wallpapers.map((wp) => (
-                <article
-                  key={wp.id}
-                  className="group rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/[0.08] hover:border-red-500/70 bg-white dark:bg-gradient-to-b dark:from-[#13080c] dark:via-[#090b10] dark:to-[#06070a] transition-all duration-400 hover:-translate-y-2 shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_12px_36px_rgba(220,38,38,0.18)] dark:hover:shadow-[0_12px_36px_rgba(220,38,38,0.22)] flex flex-col justify-between"
-                >
-                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900 ring-1 ring-black/5 dark:ring-white/10 group-hover:ring-red-500/30 transition-all">
-                    <img
-                      src={wp.image}
-                      alt={wp.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
-
-                    {/* Resolution Tag Top-Left */}
-                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-white text-zinc-950 text-[9px] font-mono font-black shadow-md">
-                      4K UHD
-                    </span>
-
-                    {/* Category Pill Top-Right */}
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-red-600 text-white text-[9px] font-black uppercase shadow-md">
-                      {typeof wp.category === 'object' ? wp.category?.name : wp.category}
-                    </span>
-
-                    {/* Download Floating Action */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300">
-                      <a
-                        href={wp.image}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
-                        className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black shadow-xl shadow-red-600/50 scale-95 group-hover:scale-100 transition-all"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Download 4K</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="p-4 space-y-2">
-                    <h3 className="text-sm font-black text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors truncate font-display">
-                      {wp.title}
-                    </h3>
-                    <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 dark:text-zinc-400 pt-1 border-t border-zinc-100 dark:border-white/[0.08]">
-                      <span>{wp.resolution}</span>
-                      <span className="text-red-600 dark:text-red-400 font-bold">{wp.downloads}</span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <EmptyState title="No Wallpapers Found" description="No wallpaper images uploaded yet." />
-          )}
-        </section>
-      )}
 
       {/* =========================================================
           AUDIO & SOUNDTRACKS SECTION
@@ -307,7 +216,15 @@ export default function Media() {
               {audioTracks.map((track) => (
                 <article
                   key={track.id}
-                  className="group p-4 sm:p-5 rounded-2xl border border-zinc-200/80 dark:border-white/[0.08] hover:border-red-500/70 bg-white dark:bg-gradient-to-b dark:from-[#13080c] dark:via-[#090b10] dark:to-[#06070a] shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_30px_rgba(220,38,38,0.18)] dark:hover:shadow-[0_10px_30px_rgba(220,38,38,0.22)] transition-all duration-300 hover:-translate-y-1 flex items-center justify-between gap-4"
+                  onClick={() =>
+                    setSelectedVideo({
+                      title: track.title,
+                      mediaUrl: track.mediaUrl,
+                      videoUrl: track.mediaUrl,
+                      description: `Playing ${track.title} by ${track.artist}`
+                    })
+                  }
+                  className="group cursor-pointer p-4 sm:p-5 rounded-2xl border border-zinc-200/80 dark:border-white/[0.08] hover:border-red-500/70 bg-white dark:bg-gradient-to-b dark:from-[#13080c] dark:via-[#090b10] dark:to-[#06070a] shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_10px_30px_rgba(220,38,38,0.18)] dark:hover:shadow-[0_10px_30px_rgba(220,38,38,0.22)] transition-all duration-300 hover:-translate-y-1 flex items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-red-50 dark:bg-red-600/20 border border-red-200 dark:border-red-500/40 text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors duration-300 shadow-sm">
@@ -328,14 +245,6 @@ export default function Media() {
                     <span className="text-[10px] font-mono font-bold text-zinc-500 dark:text-zinc-400">{track.duration}</span>
                     <button
                       type="button"
-                      onClick={() =>
-                        setSelectedVideo({
-                          title: track.title,
-                          mediaUrl: track.mediaUrl,
-                          videoUrl: track.mediaUrl,
-                          description: `Playing ${track.title} by ${track.artist}`
-                        })
-                      }
                       className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-600/40 hover:scale-110 transition-all"
                     >
                       <Play className="w-3.5 h-3.5 fill-current ml-0.5" />

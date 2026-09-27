@@ -1,21 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { Heart, Star, Sparkles, ArrowRight, Shield, Zap } from "lucide-react";
+import { Star, Sparkles, ArrowRight, Shield, Zap } from "lucide-react";
+import BookmarkButton from "./BookmarkButton";
+import ShareButton from "./ShareButton";
 
 export default function CharacterCard({ character }) {
-  const [liked, setLiked] = useState(false);
-
   if (!character) return null;
 
   const image = character.avatar || character.image || character.banner;
   const name = character.name || character.title || "Character";
-  const characterLink = `/characters/${character.slug || character.id}`;
+  const characterLink = `/characters/${character.slug || character.id || character._id}`;
   const loreSnippet = character.shortBio || character.bio || character.description;
 
   const categoryName = typeof character.category === 'object' ? character.category?.name || 'Featured' : character.category || 'Featured';
 
   return (
-    <article
+    <Link
+      to={characterLink}
       className="
         group relative flex flex-col justify-between
         rounded-2xl p-3.5 sm:p-4
@@ -25,7 +26,7 @@ export default function CharacterCard({ character }) {
         hover:-translate-y-2
         shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_6px_24px_rgba(0,0,0,0.6)]
         hover:shadow-[0_14px_40px_rgba(239,68,68,0.25)] dark:hover:shadow-[0_14px_40px_rgba(220,38,38,0.25)]
-        h-full select-none
+        h-full select-none block
       "
     >
       {/* Top Outer Accent Frame Glow */}
@@ -64,29 +65,11 @@ export default function CharacterCard({ character }) {
           </div>
         )}
 
-        {/* Like Button Top-Right */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setLiked(!liked);
-          }}
-          aria-label={liked ? "Unlike character" : "Like character"}
-          className={`
-            absolute top-2.5 right-2.5 z-20
-            w-8 h-8 rounded-full
-            flex items-center justify-center
-            backdrop-blur-md border transition-all duration-300
-            ${
-              liked
-                ? "bg-red-600 border-red-400 text-white shadow-lg shadow-red-600/50 scale-105"
-                : "bg-black/60 border-white/20 text-white/90 hover:bg-red-600 hover:border-red-500 hover:text-white hover:scale-105"
-            }
-          `}
-        >
-          <Heart size={14} className={liked ? "fill-current text-white" : ""} />
-        </button>
+        {/* Bookmark & Share Buttons Top-Right */}
+        <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5">
+          <ShareButton item={character} itemType="Character" size="sm" />
+          <BookmarkButton item={character} itemType="Character" variant="cardIcon" />
+        </div>
 
         {/* Role / Power Badge Bottom-Left */}
         {(character.role || character.powerLevel) && (
@@ -116,14 +99,14 @@ export default function CharacterCard({ character }) {
             )}
           </div>
 
-          <Link to={characterLink} className="block group/title">
+          <div className="block group/title">
             <h3
               className="text-base sm:text-lg font-black text-zinc-900 dark:text-white leading-snug truncate font-display transition-colors duration-200 group-hover/title:text-red-500 dark:group-hover/title:text-red-400"
               title={name}
             >
               {name}
             </h3>
-          </Link>
+          </div>
 
           {loreSnippet && (
             <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium line-clamp-1 leading-relaxed">
@@ -141,18 +124,17 @@ export default function CharacterCard({ character }) {
             </span>
           </div>
 
-          <Link
-            to={characterLink}
+          <span
             className="group/link inline-flex items-center gap-1.5 text-xs font-bold text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
           >
             <span>View Details</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform duration-200" />
-          </Link>
+          </span>
         </div>
 
         {/* Hover Red Accent Sweep */}
         <div className="h-[1.5px] bg-gradient-to-r from-transparent via-red-500/60 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500 rounded-full" />
       </div>
-    </article>
+    </Link>
   );
 }

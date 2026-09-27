@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import EmptyState from '../components/EmptyState';
+import BookmarkButton from '../components/BookmarkButton';
+import ShareButton from '../components/ShareButton';
 
 export default function MerchandiseDetails() {
   const { slug } = useParams();
@@ -160,13 +162,8 @@ export default function MerchandiseDetails() {
                 <span>Add to Cart</span>
               </button>
 
-              <button
-                type="button"
-                className="p-3 rounded-xl border border-[#1b263e] hover:bg-[#151f38] text-zinc-400 hover:text-rose-500 transition-colors"
-                title="Wishlist"
-              >
-                <Heart className="w-4 h-4" />
-              </button>
+              <BookmarkButton item={item} itemType="Merchandise" showLabel={false} size="md" />
+              <ShareButton item={item} itemType="Merchandise" showLabel={false} size="md" />
             </div>
 
             {addedNotification && (

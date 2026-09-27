@@ -87,11 +87,11 @@ export default function SearchBar({
       </form>
 
       {isOpen && trimmed && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#0f0507] border border-red-500/30 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-          <div className="p-2 max-h-80 overflow-y-auto divide-y divide-white/[0.06]">
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-[#0f0507] border border-zinc-200 dark:border-red-500/30 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+          <div className="p-2 max-h-80 overflow-y-auto divide-y divide-zinc-100 dark:divide-white/[0.06]">
             {filteredContent.length > 0 ? (
               <>
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-400 font-mono">
+                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 font-mono">
                   Search Results ({filteredContent.length})
                 </div>
                 {filteredContent.map((item) => (
@@ -99,37 +99,37 @@ export default function SearchBar({
                     key={item.id}
                     type="button"
                     onClick={() => handleSelectContent(item.slug)}
-                    className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-red-950/40 rounded-xl transition-colors text-left group"
+                    className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors text-left group"
                   >
                     <img
                       src={item.thumbnail}
                       alt={item.title}
                       referrerPolicy="no-referrer"
-                      className="w-10 h-10 rounded-lg object-cover bg-zinc-900 shrink-0"
+                      className="w-10 h-10 rounded-lg object-cover bg-zinc-100 dark:bg-zinc-900 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white group-hover:text-red-400 truncate">
+                      <p className="text-xs font-semibold text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 truncate">
                         {item.title}
                       </p>
-                      <p className="text-[11px] text-zinc-400 truncate">
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
                         {typeof item.category === 'object' ? item.category?.name : item.category} · {item.contentType} · {item.genres?.join(', ')}
                       </p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-red-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                    <ArrowRight className="w-4 h-4 text-zinc-400 dark:text-zinc-500 group-hover:text-red-500 dark:group-hover:text-red-400 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </button>
                 ))}
                 <button
                   type="button"
                   onClick={handleSearchSubmit}
-                  className="w-full mt-1 p-2 text-center text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded-xl transition-colors"
+                  className="w-full mt-1 p-2 text-center text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl transition-colors"
                 >
                   View all results for "{trimmed}" in Explore →
                 </button>
               </>
             ) : (
               <div className="py-6 px-4 text-center">
-                <p className="text-xs font-semibold text-zinc-300">No matching titles or tags</p>
-                <p className="text-[11px] text-zinc-500 mt-1">Try searching for Anime, Gaming, or Cyberpunk</p>
+                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">No matching titles or tags</p>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-500 mt-1">Try searching for Anime, Gaming, or Cyberpunk</p>
               </div>
             )}
           </div>

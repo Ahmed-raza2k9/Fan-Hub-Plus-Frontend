@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Search, Loader2, AlertCircle, Upload } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import Modal from '../../components/Modal';
+import {
+  AdminPageHeader,
+  AdminAlert,
+  AdminToolbar,
+  AdminSearch,
+  AdminTableWrap,
+  AdminEditBtn,
+  AdminDeleteBtn,
+  AdminField,
+  AdminFilePick,
+  AdminFormActions,
+  AdminConfirm,
+  AdminStatus
+} from '../../components/admin/AdminUi';
 
 export default function AdminContent() {
   const { contentList, categories, addContent, updateContent, deleteContent, toggleFeatureContent } = useData();
@@ -29,17 +43,15 @@ export default function AdminContent() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   const filteredContent = contentList.filter((c) => {
     const titleMatch = c.title?.toLowerCase().includes(searchTerm.toLowerCase().trim());
     const catName = typeof c.category === 'object' ? c.category?.name : c.category;
     const catMatch = catName?.toLowerCase().includes(searchTerm.toLowerCase().trim());
-
     const matchesSearch = titleMatch || catMatch;
-
     const catIdOrSlug = typeof c.category === 'object' ? c.category?._id || c.category?.slug : c.category;
     const matchesCat = selectedCategory === 'all' || catIdOrSlug === selectedCategory || catName === selectedCategory;
-
     return matchesSearch && matchesCat;
   });
 
@@ -105,10 +117,8 @@ export default function AdminContent() {
       payload.append('popularityScore', popularityScore);
       payload.append('isFeatured', isFeatured);
       if (releaseDate) payload.append('releaseDate', releaseDate);
-
       if (thumbnailFile) payload.append('thumbnail', thumbnailFile);
       else if (thumbnailUrl) payload.append('thumbnail', thumbnailUrl);
-
       if (mediaFile) payload.append('media', mediaFile);
       else if (mediaUrl) payload.append('mediaUrl', mediaUrl);
     } else {
@@ -144,62 +154,36 @@ export default function AdminContent() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this media item?')) return;
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
     setErrorMsg('');
-    const res = await deleteContent(id);
+    const res = await deleteContent(pendingDelete);
+    setPendingDelete(null);
     if (!res.success) {
       setErrorMsg(res.error || 'Failed to delete media item');
     }
   };
 
   return (
-    <div className="space-y-6 pb-16">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight font-display">
-            Manage Catalog Content
-          </h1>
-          <p className="text-xs text-zinc-400">
-            Publish, edit metadata, update popularity metrics, or toggle featured showcases.
-          </p>
-        </div>
+    <div className="space-y-6 max-w-[1180px]">
+      <AdminPageHeader
+        kicker="Catalog"
+        title="Content"
+        description="Publish, edit metadata, update popularity, or toggle featured showcases."
+        actions={
+          <button type="button" onClick={handleOpenAdd} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold admin-btn-primary">
+            <Plus className="w-4 h-4" />
+            Add media
+          </button>
+        }
+      />
 
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-all shadow-md shadow-rose-950"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Media Item</span>
-        </button>
-      </div>
+      <AdminAlert>{errorMsg}</AdminAlert>
 
-      {errorMsg && (
-        <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row gap-3 p-4 bg-zinc-950/80 border border-zinc-850 rounded-2xl">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-zinc-500" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by title or category..."
-            className="w-full pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-500"
-          />
-        </div>
-
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-rose-500"
-        >
-          <option value="all">All Categories</option>
+      <AdminToolbar>
+        <AdminSearch value={searchTerm} onChange={setSearchTerm} placeholder="Search by title or category…" />
+        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="px-3 py-2.5 text-xs sm:w-48">
+          <option value="all">All categories</option>
           {categories.map((c) => {
             const cId = c.id || c._id;
             return (
@@ -209,25 +193,25 @@ export default function AdminContent() {
             );
           })}
         </select>
-      </div>
+      </AdminToolbar>
 
-      <div className="overflow-x-auto rounded-2xl border border-zinc-850 bg-zinc-950">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-zinc-900/60 border-b border-zinc-850 text-zinc-400 uppercase tracking-wider font-semibold">
+      <AdminTableWrap>
+        <table className="text-left">
+          <thead>
             <tr>
-              <th className="py-3.5 px-4">Title</th>
-              <th className="py-3.5 px-4">Category</th>
-              <th className="py-3.5 px-4">Type</th>
-              <th className="py-3.5 px-4">Popularity</th>
-              <th className="py-3.5 px-4">Featured</th>
-              <th className="py-3.5 px-4 text-right">Actions</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Popularity</th>
+              <th>Featured</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-900 text-zinc-300">
+          <tbody>
             {filteredContent.length === 0 ? (
               <tr>
-                <td colSpan="6" className="py-8 text-center text-zinc-500 font-medium">
-                  No Media Found
+                <td colSpan="6" className="py-10 text-center text-stone-500">
+                  No content found
                 </td>
               </tr>
             ) : (
@@ -235,57 +219,30 @@ export default function AdminContent() {
                 const id = item.id || item._id;
                 const catName = typeof item.category === 'object' ? item.category?.name : item.category;
                 return (
-                  <tr key={id} className="hover:bg-zinc-900/40 transition-colors">
-                    <td className="py-3.5 px-4 flex items-center gap-3">
-                      {item.thumbnail && (
-                        <img
-                          src={item.thumbnail}
-                          alt={item.title}
-                          referrerPolicy="no-referrer"
-                          className="w-12 h-8 rounded-lg object-cover bg-zinc-900 shrink-0"
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <span className="font-bold text-white block truncate max-w-xs">{item.title}</span>
-                        <span className="text-[11px] text-zinc-500 truncate block">{item.slug}</span>
+                  <tr key={id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        {item.thumbnail && (
+                          <img src={item.thumbnail} alt="" referrerPolicy="no-referrer" className="w-12 h-8 rounded-lg object-cover bg-black/40 shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <span className="font-medium text-white block truncate max-w-xs">{item.title}</span>
+                          <span className="text-[11px] text-stone-500 truncate block">{item.slug}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-semibold text-rose-400">{catName}</td>
-                    <td className="py-3.5 px-4 uppercase font-mono text-[11px] text-zinc-400">{item.contentType}</td>
-                    <td className="py-3.5 px-4 font-mono font-semibold text-white">
-                      {item.popularityScore ?? item.popularity ?? 0}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <button
-                        type="button"
-                        onClick={() => toggleFeatureContent(id)}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase transition-colors ${
-                          item.isFeatured || item.featured
-                            ? 'bg-rose-600 text-white'
-                            : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300 border border-zinc-800'
-                        }`}
-                      >
-                        {item.isFeatured || item.featured ? 'Featured' : 'Standard'}
+                    <td className="text-stone-300">{catName}</td>
+                    <td className="uppercase font-mono text-[11px] text-stone-400">{item.contentType}</td>
+                    <td className="tabular-nums text-white">{item.popularityScore ?? item.popularity ?? 0}</td>
+                    <td>
+                      <button type="button" onClick={() => toggleFeatureContent(id)}>
+                        <AdminStatus value={item.isFeatured || item.featured ? 'featured' : 'standard'} />
                       </button>
                     </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(item)}
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900"
-                          title="Edit content"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(id)}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-900"
-                          title="Delete content"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                    <td className="text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <AdminEditBtn onClick={() => handleOpenEdit(item)} />
+                        <AdminDeleteBtn onClick={() => setPendingDelete(id)} />
                       </div>
                     </td>
                   </tr>
@@ -294,42 +251,33 @@ export default function AdminContent() {
             )}
           </tbody>
         </table>
-      </div>
+      </AdminTableWrap>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingId ? 'Edit Content Item' : 'Add Content Item'}
-      >
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Edit content' : 'Add content'} maxWidth="max-w-lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
-              Title *
-            </label>
+          <AdminField label="Title *">
             <input
               type="text"
               required
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                if (!editingId) {
-                  setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-                }
+                if (!editingId) setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
               }}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-100 focus:outline-none focus:border-rose-500"
+              className="w-full px-3 py-2 text-sm"
             />
-          </div>
-
+          </AdminField>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Category *
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-rose-500"
-              >
+            <AdminField label="URL slug *">
+              <input type="text" required value={slug} onChange={(e) => setSlug(e.target.value)} className="w-full px-3 py-2 text-xs font-mono" />
+            </AdminField>
+            <AdminField label="Release date">
+              <input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} className="w-full px-3 py-2 text-xs" />
+            </AdminField>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <AdminField label="Category *">
+              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-3 py-2 text-xs">
                 {categories.map((c) => {
                   const cId = c.id || c._id;
                   return (
@@ -339,147 +287,62 @@ export default function AdminContent() {
                   );
                 })}
               </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Content Type *
-              </label>
-              <select
-                value={contentType}
-                onChange={(e) => setContentType(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-rose-500"
-              >
+            </AdminField>
+            <AdminField label="Content type *">
+              <select value={contentType} onChange={(e) => setContentType(e.target.value)} className="w-full px-3 py-2 text-xs">
                 <option value="video">Video</option>
                 <option value="trailer">Trailer</option>
                 <option value="article">Article</option>
                 <option value="audio">Audio</option>
                 <option value="image">Image Gallery</option>
               </select>
-            </div>
+            </AdminField>
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
-              Description *
-            </label>
-            <textarea
-              rows={2}
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-100 focus:outline-none focus:border-rose-500"
+          <AdminField label="Description *">
+            <textarea rows={2} required value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-3 py-2 text-sm" />
+          </AdminField>
+          <AdminField label="Thumbnail">
+            <AdminFilePick
+              fileLabel={thumbnailFile ? thumbnailFile.name : 'Choose local thumbnail'}
+              accept="image/*"
+              onChange={(e) => setThumbnailFile(e.target.files[0] || null)}
             />
-          </div>
-
-          {/* Thumbnail upload/URL */}
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-zinc-300">
-              Thumbnail (Upload File or URL)
-            </label>
-            <label className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl text-xs text-zinc-300 cursor-pointer">
-              <Upload className="w-4 h-4 text-rose-400" />
-              <span className="truncate">{thumbnailFile ? thumbnailFile.name : 'Choose local thumbnail file'}</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setThumbnailFile(e.target.files[0] || null)}
-                className="hidden"
-              />
-            </label>
-            <input
-              type="text"
-              placeholder="Or paste external thumbnail URL"
-              value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-200 focus:outline-none focus:border-rose-500"
+            <input type="text" placeholder="Or paste thumbnail URL" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} className="w-full px-3 py-2 mt-2 text-xs font-mono" />
+          </AdminField>
+          <AdminField label="Media file">
+            <AdminFilePick
+              fileLabel={mediaFile ? mediaFile.name : 'Choose local media file'}
+              accept="video/*,audio/*,image/*"
+              onChange={(e) => setMediaFile(e.target.files[0] || null)}
             />
-          </div>
-
-          {/* Media upload/URL */}
-          <div className="space-y-1">
-            <label className="block text-xs font-semibold text-zinc-300">
-              Media File (Upload File or URL)
-            </label>
-            <label className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl text-xs text-zinc-300 cursor-pointer">
-              <Upload className="w-4 h-4 text-rose-400" />
-              <span className="truncate">{mediaFile ? mediaFile.name : 'Choose local media file'}</span>
-              <input
-                type="file"
-                accept="video/*,audio/*,image/*"
-                onChange={(e) => setMediaFile(e.target.files[0] || null)}
-                className="hidden"
-              />
-            </label>
-            <input
-              type="text"
-              placeholder="Or paste external media URL"
-              value={mediaUrl}
-              onChange={(e) => setMediaUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-200 focus:outline-none focus:border-rose-500"
-            />
-          </div>
-
+            <input type="text" placeholder="Or paste media URL" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} className="w-full px-3 py-2 mt-2 text-xs font-mono" />
+          </AdminField>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Genres (comma-separated)
-              </label>
-              <input
-                type="text"
-                value={genres}
-                onChange={(e) => setGenres(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-rose-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                Popularity Score (0-100)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={popularityScore}
-                onChange={(e) => setPopularityScore(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-rose-500"
-              />
-            </div>
+            <AdminField label="Genres (comma-separated)">
+              <input type="text" value={genres} onChange={(e) => setGenres(e.target.value)} className="w-full px-3 py-2 text-xs" />
+            </AdminField>
+            <AdminField label="Popularity (0–100)">
+              <input type="number" min="0" max="100" value={popularityScore} onChange={(e) => setPopularityScore(e.target.value)} className="w-full px-3 py-2 text-xs" />
+            </AdminField>
           </div>
-
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
-              id="featured"
-              checked={isFeatured}
-              onChange={(e) => setIsFeatured(e.target.checked)}
-              className="accent-rose-600 rounded"
-            />
-            <label htmlFor="featured" className="text-xs text-zinc-200 cursor-pointer">
-              Pin as Featured Showcase item on Homepage
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-xl flex items-center gap-1.5 disabled:opacity-50"
-            >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>{editingId ? 'Save Changes' : 'Publish Entry'}</span>
-            </button>
-          </div>
+          <AdminField label="Tags (comma-separated)">
+            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} className="w-full px-3 py-2 text-xs" />
+          </AdminField>
+          <label className="flex items-center gap-2 text-xs text-stone-200 cursor-pointer">
+            <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
+            Pin as featured on homepage
+          </label>
+          <AdminFormActions onCancel={() => setIsModalOpen(false)} submitting={isSubmitting} submitLabel={editingId ? 'Save changes' : 'Publish'} />
         </form>
       </Modal>
+
+      <AdminConfirm
+        open={!!pendingDelete}
+        title="Delete content"
+        message="This will permanently remove this media item."
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

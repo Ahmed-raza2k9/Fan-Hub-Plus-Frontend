@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Star, ArrowUpRight } from 'lucide-react';
+import { ShoppingCart, ArrowUpRight } from 'lucide-react';
+import BookmarkButton from './BookmarkButton';
+import ShareButton from './ShareButton';
 
 export default function MerchandiseCard({ item, onAddToCart }) {
   if (!item) return null;
@@ -9,11 +11,13 @@ export default function MerchandiseCard({ item, onAddToCart }) {
   const categoryName = typeof item.category === 'object' ? item.category?.name || 'Merch' : item.category || 'Merch';
 
   return (
-    <div className="group rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/[0.07] bg-white dark:bg-gradient-to-b dark:from-[#0e1018] dark:to-[#080b12] hover:border-red-500/40 transition-all duration-300 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-none hover:shadow-[0_12px_36px_rgba(220,38,38,0.18)] dark:hover:shadow-[0_8px_40px_rgba(239,68,68,0.18)] flex flex-col justify-between">
-
+    <Link
+      to={`/merchandise/${item.slug || item._id}`}
+      className="group rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/[0.07] bg-white dark:bg-gradient-to-b dark:from-[#0e1018] dark:to-[#080b12] hover:border-red-500/40 transition-all duration-300 hover:-translate-y-1.5 shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-none hover:shadow-[0_12px_36px_rgba(220,38,38,0.18)] dark:hover:shadow-[0_8px_40px_rgba(239,68,68,0.18)] flex flex-col justify-between block"
+    >
       {/* Product Image */}
       <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 dark:bg-[#060810]">
-        <Link to={`/merchandise/${item.slug}`} className="block w-full h-full">
+        <div className="block w-full h-full">
           <img
             src={item.image}
             alt={displayTitle}
@@ -22,7 +26,7 @@ export default function MerchandiseCard({ item, onAddToCart }) {
           />
           {/* Cinematic overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </Link>
+        </div>
 
         {/* Discount badge */}
         {item.discount && (
@@ -31,14 +35,11 @@ export default function MerchandiseCard({ item, onAddToCart }) {
           </span>
         )}
 
-        {/* Quick view arrow */}
-        <Link
-          to={`/merchandise/${item.slug}`}
-          className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 hover:border-red-400 transition-all duration-200"
-          aria-label="View product"
-        >
-          <ArrowUpRight className="w-4 h-4" />
-        </Link>
+        {/* Bookmark & Share Buttons Top-Right */}
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+          <ShareButton item={item} itemType="Merchandise" size="sm" />
+          <BookmarkButton item={item} itemType="Merchandise" variant="cardIcon" />
+        </div>
       </div>
 
       {/* Info */}
@@ -47,11 +48,11 @@ export default function MerchandiseCard({ item, onAddToCart }) {
           <span className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-widest">
             {categoryName}
           </span>
-          <Link to={`/merchandise/${item.slug}`} className="block">
+          <div className="block">
             <h4 className="text-sm font-bold text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200 line-clamp-1 font-display">
               {displayTitle}
             </h4>
-          </Link>
+          </div>
         </div>
 
         <div className="flex items-center justify-between pt-1 border-t border-zinc-100 dark:border-white/[0.06]">
@@ -61,7 +62,11 @@ export default function MerchandiseCard({ item, onAddToCart }) {
 
           <button
             type="button"
-            onClick={() => onAddToCart && onAddToCart(item)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onAddToCart) onAddToCart(item);
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold shadow-md shadow-red-600/30 hover:shadow-red-500/50 transition-all hover:scale-105 active:scale-95"
             aria-label="Add to cart"
           >
@@ -73,7 +78,6 @@ export default function MerchandiseCard({ item, onAddToCart }) {
         {/* Bottom accent sweep */}
         <div className="h-[1px] bg-gradient-to-r from-red-500/0 via-red-500/35 to-red-500/0 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-full" />
       </div>
-    </div>
+    </Link>
   );
 }
-

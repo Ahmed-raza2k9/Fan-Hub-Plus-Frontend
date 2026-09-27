@@ -1,12 +1,15 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Calendar, Clock } from 'lucide-react';
 
 export default function UpcomingReleaseCard({ item }) {
   if (!item) return null;
   const categoryName = typeof item?.category === 'object' ? item?.category?.name || 'Anime' : item?.category || 'Anime';
+  const targetLink = item.slug ? `/events/${item.slug}` : (item.id ? `/events/${item.id}` : `/events`);
 
   return (
-    <div
+    <Link
+      to={targetLink}
       className="
         group relative flex flex-col justify-between
         rounded-[24px] p-3.5 sm:p-4
@@ -16,7 +19,7 @@ export default function UpcomingReleaseCard({ item }) {
         hover:-translate-y-1.5
         shadow-[0_4px_20px_rgba(225,29,72,0.05)] dark:shadow-[0_0_15px_rgba(0,0,0,0.4)]
         hover:shadow-[0_14px_40px_rgba(239,68,68,0.25)] dark:hover:shadow-[0_0_35px_rgba(239,68,68,0.45)]
-        h-full select-none cursor-pointer
+        h-full select-none cursor-pointer block
       "
     >
       {/* Poster Image Container */}
@@ -79,6 +82,6 @@ export default function UpcomingReleaseCard({ item }) {
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

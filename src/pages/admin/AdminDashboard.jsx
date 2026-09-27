@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
@@ -9,11 +9,24 @@ import {
   Calendar,
   Sparkles,
   MessageSquare,
-  ArrowRight,
-  Loader2
+  Star,
+  Bookmark,
+  ArrowRight
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { adminApi } from '../../services/api';
+import {
+  AdminPageHeader,
+  AdminStatCard,
+  AdminBarList,
+  AdminAreaChart,
+  AdminStatus,
+  AdminLoading,
+  AdminError,
+  AdminEmpty,
+  AdminTableWrap,
+  AdminSection
+} from '../../components/admin/AdminUi';
 
 export default function AdminDashboard() {
   const {
@@ -25,230 +38,268 @@ export default function AdminDashboard() {
     events,
     fanSubmissions,
     feedbackList,
-    updateFanSubmissionStatus
+    updateFanSubmissionStatus,
+    loading
   } = useData();
 
   const [analytics, setAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState('');
+  const [recentRatings, setRecentRatings] = useState([]);
+
+  const loadAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+      const res = await adminApi.getAnalytics();
+      if (res.success && res.analytics) {
+        setAnalytics(res.analytics);
+        setAnalyticsError('');
+      } else {
+        setAnalyticsError(res.message || 'Analytics unavailable.');
+      }
+    } catch (err) {
+      setAnalyticsError(err.message || 'Failed to load analytics.');
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
 
   useEffect(() => {
-    let isMounted = true;
-    const loadAnalytics = async () => {
-      try {
-        const res = await adminApi.getAnalytics();
-        if (isMounted && res.success && res.analytics) {
-          setAnalytics(res.analytics);
-        }
-      } catch (err) {
-        console.error('Error fetching analytics:', err);
-      } finally {
-        if (isMounted) setLoadingAnalytics(false);
-      }
-    };
     loadAnalytics();
-    return () => {
-      isMounted = false;
-    };
+    adminApi
+      .getRatings()
+      .then((res) => {
+        if (res.success && Array.isArray(res.ratings)) {
+          setRecentRatings(res.ratings.slice(0, 5));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const pendingSubmissions = fanSubmissions.filter((s) => s.status === 'pending');
   const pendingFeedback = feedbackList.filter((f) => f.status === 'pending');
 
-  const stats = [
-    {
-      title: 'Total Registered Users',
-      count: analytics?.users?.totalUsers ?? usersList.length,
-      icon: Users,
-      link: '/admin/users',
-      change: `${analytics?.users?.activeUsers ?? usersList.length} Active Accounts`
-    },
-    {
-      title: 'Indexed Categories',
-      count: analytics?.activity?.totalCategories ?? categories.length,
-      icon: Layers,
-      link: '/admin/categories',
-      change: 'Active Verticals'
-    },
-    {
-      title: 'Catalog Media Items',
-      count: analytics?.content?.totalContent ?? contentList.length,
-      icon: Film,
-      link: '/admin/content',
-      change: `${analytics?.content?.featuredContent ?? 0} Featured`
-    },
-    {
-      title: 'Lore Characters',
-      count: analytics?.activity?.totalCharacters ?? characters.length,
-      icon: UserCheck,
-      link: '/admin/characters',
-      change: 'Universal Codex'
-    },
-    {
-      title: 'Showcase Merch Items',
-      count: analytics?.activity?.totalMerchandise ?? merchandise.length,
-      icon: ShoppingBag,
-      link: '/admin/merchandise',
-      change: 'Partner Figurine / Props'
-    },
-    {
-      title: 'Scheduled Events',
-      count: analytics?.activity?.totalEvents ?? events.length,
-      icon: Calendar,
-      link: '/admin/events',
-      change: 'Global Conventions'
-    },
-    {
-      title: 'Pending Submissions',
-      count: analytics?.activity?.pendingSubmissions ?? pendingSubmissions.length,
-      icon: Sparkles,
-      link: '/admin/fan-submissions',
-      change: 'Needs Review',
-      alert: (analytics?.activity?.pendingSubmissions || pendingSubmissions.length) > 0
-    },
-    {
-      title: 'Unread Feedback',
-      count: analytics?.activity?.totalFeedback ?? pendingFeedback.length,
-      icon: MessageSquare,
-      link: '/admin/feedback',
-      change: 'Member Tickets',
-      alert: (analytics?.activity?.totalFeedback || pendingFeedback.length) > 0
-    }
-  ];
+  const typeBars = useMemo(() => {
+    const list = analytics?.content?.contentTypeBreakdown || [];
+    return list.map((item) => ({
+      id: item._id || 'unknown',
+      label: String(item._id || 'Unspecified'),
+      value: item.count,
+      display: `${item.count}`
+    }));
+  }, [analytics]);
+
+  const categoryBars = useMemo(() => {
+    const list = analytics?.popularCategories || [];
+    return list.map((cat) => ({
+      id: cat._id || cat.slug,
+      label: cat.name,
+      value: cat.totalContent,
+      display: `${cat.totalContent} items`
+    }));
+  }, [analytics]);
+
+  const registrationsByMonth = useMemo(() => {
+    const buckets = {};
+    usersList.forEach((u) => {
+      if (!u.createdAt) return;
+      const d = new Date(u.createdAt);
+      if (Number.isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      buckets[key] = (buckets[key] || 0) + 1;
+    });
+    return Object.keys(buckets)
+      .sort()
+      .slice(-8)
+      .map((key) => ({ id: key, label: key.slice(5), value: buckets[key] }));
+  }, [usersList]);
+
+  const recentUsers = useMemo(() => {
+    return [...usersList]
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 5);
+  }, [usersList]);
+
+  const recentContent = useMemo(() => {
+    return [...contentList]
+      .sort((a, b) => new Date(b.createdAt || b.releaseDate || 0) - new Date(a.createdAt || a.releaseDate || 0))
+      .slice(0, 5);
+  }, [contentList]);
+
+  const n = (v, fallback) => (v === undefined || v === null ? fallback : v);
+
+  if (loading && usersList.length === 0 && contentList.length === 0 && loadingAnalytics) {
+    return <AdminLoading label="Loading dashboard…" />;
+  }
 
   return (
-    <div className="space-y-10 pb-20 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-md shadow-emerald-400/50" />
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
-              Live Cluster: Fanhub-US-Central
-            </span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight font-display">
-            Executive <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Admin Control</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 font-medium">
-            Platform health, community moderation, catalog orchestration, and system logs.
-          </p>
-        </div>
+    <div className="space-y-8 max-w-[1180px]">
+      <AdminPageHeader
+        kicker="Fan Hub Plus"
+        title="Platform overview"
+        description="Live counts from the Fan Hub Plus database. Open a card to manage that area."
+        actions={
+          <>
+            <Link to="/admin/content" className="px-3.5 py-2 text-xs font-semibold admin-btn-primary">
+              Manage content
+            </Link>
+            <Link to="/admin/fan-submissions" className="px-3.5 py-2 text-xs font-semibold admin-btn-ghost">
+              Review queue
+            </Link>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2.5">
-          <Link
+      {analyticsError && !analytics ? (
+        <AdminError message={analyticsError} onRetry={loadAnalytics} />
+      ) : null}
+
+      <section>
+        <h2 className="text-sm font-semibold text-white mb-3">At a glance</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <AdminStatCard
+            title="Users"
+            value={n(analytics?.users?.totalUsers, usersList.length)}
+            hint={`${n(analytics?.users?.adminUsers, usersList.filter((u) => u.role === 'admin').length)} admins`}
+            icon={Users}
+            to="/admin/users"
+          />
+          <AdminStatCard
+            title="Content"
+            value={n(analytics?.content?.totalContent, contentList.length)}
+            hint={`${n(analytics?.content?.featuredContent, 0)} featured`}
+            icon={Film}
             to="/admin/content"
-            className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl transition-all shadow-md shadow-blue-500/25"
-          >
-            Manage Catalog
-          </Link>
-          <Link
+          />
+          <AdminStatCard
+            title="Pending submissions"
+            value={n(analytics?.submissions?.pendingSubmissions, pendingSubmissions.length)}
+            hint={`${n(analytics?.submissions?.totalSubmissions, fanSubmissions.length)} total`}
+            icon={Sparkles}
             to="/admin/fan-submissions"
-            className="px-5 py-2.5 text-xs font-bold text-zinc-300 bg-[#0c101d] hover:bg-[#151c2e] border border-white/[0.08] rounded-xl transition-colors"
-          >
-            Review Queue
-          </Link>
+            accent={n(analytics?.submissions?.pendingSubmissions, pendingSubmissions.length) > 0}
+          />
+          <AdminStatCard
+            title="Ratings"
+            value={n(analytics?.ratings?.totalRatings, 0)}
+            hint={`Avg ${n(analytics?.ratings?.averageRating, 0)} / 5`}
+            icon={Star}
+            to="/admin/ratings"
+          />
         </div>
-      </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
+          <AdminStatCard dense title="Categories" value={n(analytics?.activity?.totalCategories, categories.length)} icon={Layers} to="/admin/categories" />
+          <AdminStatCard dense title="Characters" value={n(analytics?.activity?.totalCharacters, characters.length)} icon={UserCheck} to="/admin/characters" />
+          <AdminStatCard dense title="Merchandise" value={n(analytics?.activity?.totalMerchandise, merchandise.length)} icon={ShoppingBag} to="/admin/merchandise" />
+          <AdminStatCard dense title="Events" value={n(analytics?.activity?.totalEvents, events.length)} icon={Calendar} to="/admin/events" />
+          <AdminStatCard dense title="Bookmarks" value={n(analytics?.activity?.totalBookmarks, 0)} icon={Bookmark} />
+          <AdminStatCard
+            dense
+            title="Feedback"
+            value={n(analytics?.activity?.totalFeedback, feedbackList.length)}
+            hint={`${pendingFeedback.length} pending`}
+            icon={MessageSquare}
+            to="/admin/feedback"
+            accent={pendingFeedback.length > 0}
+          />
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <Link
-            key={idx}
-            to={stat.link}
-            className="p-5 rounded-3xl bg-[#0c101d] border border-white/[0.08] hover:border-blue-500/40 transition-all space-y-2 group shadow-xl"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-zinc-400 truncate">{stat.title}</span>
-              <div
-                className={`p-2.5 rounded-xl ${
-                  stat.alert
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-[#121829] text-blue-400 group-hover:bg-blue-600 group-hover:text-white'
-                } transition-colors`}
-              >
-                <stat.icon className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="flex items-baseline justify-between pt-1">
-              <span className="text-2xl sm:text-3xl font-black text-white font-mono">
-                {loadingAnalytics ? <Loader2 className="w-5 h-5 animate-spin text-zinc-500" /> : stat.count}
-              </span>
-              <span className={`text-[11px] font-bold ${stat.alert ? 'text-amber-400' : 'text-zinc-500'}`}>
-                {stat.change}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Moderation Queue */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <h2 className="text-lg font-bold text-white tracking-tight font-display">
-              Submissions Awaiting Moderation ({pendingSubmissions.length})
-            </h2>
+      <section className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+        <div className="admin-card p-5 xl:col-span-3">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-white">User registrations</h2>
+            <Link to="/admin/analytics" className="text-xs text-[#ff2e63] hover:text-[#ff6b8f]">
+              Full analytics
+            </Link>
           </div>
-          <Link
-            to="/admin/fan-submissions"
-            className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
-          >
-            <span>Full Moderation Table</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <p className="text-[11px] text-stone-500 mb-3">From loaded user records that include a created date.</p>
+          <AdminAreaChart items={registrationsByMonth} emptyLabel="No registration dates available yet." />
         </div>
+        <div className="admin-card p-5 xl:col-span-2">
+          <h2 className="text-sm font-semibold text-white mb-4">Content by type</h2>
+          <AdminBarList items={typeBars} emptyLabel="No content type data yet." />
+        </div>
+      </section>
 
-        {pendingSubmissions.length > 0 ? (
-          <div className="overflow-x-auto rounded-3xl border border-white/[0.08] bg-[#0c101d] shadow-xl">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#121829]/60 border-b border-white/[0.08] text-zinc-400 uppercase tracking-wider font-bold">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="admin-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white">Content by category</h2>
+            <Link to="/admin/categories" className="text-xs text-[#ff2e63] hover:text-[#ff6b8f]">
+              Manage
+            </Link>
+          </div>
+          <AdminBarList items={categoryBars} emptyLabel="No category distribution yet." />
+        </div>
+        <div className="admin-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white">Recent ratings</h2>
+            <Link to="/admin/ratings" className="text-xs text-[#ff2e63] hover:text-[#ff6b8f]">
+              View all
+            </Link>
+          </div>
+          {recentRatings.length === 0 ? (
+            <p className="text-sm text-stone-500">No ratings yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentRatings.map((r) => (
+                <li key={r._id} className="flex items-center justify-between gap-3 text-xs">
+                  <p className="text-white font-medium truncate">{r.content?.title || 'Untitled'}</p>
+                  <span className="tabular-nums text-[#ff2e63] shrink-0">{r.rating || r.score}/5</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <AdminSection
+        title="Pending submissions"
+        action={
+          <Link to="/admin/fan-submissions" className="text-xs text-[#ff2e63] hover:text-[#ff6b8f] inline-flex items-center gap-1">
+            All submissions <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        }
+      >
+        {pendingSubmissions.length === 0 ? (
+          <AdminEmpty title="Queue clear" description="No fan submissions are waiting for review." />
+        ) : (
+          <AdminTableWrap>
+            <table className="text-left">
+              <thead>
                 <tr>
-                  <th className="py-3.5 px-5">Creation</th>
-                  <th className="py-3.5 px-4">Category</th>
-                  <th className="py-3.5 px-4">Creator</th>
-                  <th className="py-3.5 px-4">Date</th>
-                  <th className="py-3.5 px-5 text-right">Quick Moderation</th>
+                  <th>Work</th>
+                  <th>Category</th>
+                  <th>Creator</th>
+                  <th>Date</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.05] text-zinc-300">
+              <tbody>
                 {pendingSubmissions.slice(0, 5).map((sub) => (
-                  <tr key={sub.id || sub._id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3.5 px-5 flex items-center gap-3">
-                      {sub.image && (
-                        <img
-                          src={sub.image}
-                          alt={sub.title}
-                          referrerPolicy="no-referrer"
-                          className="w-10 h-10 rounded-xl object-cover bg-zinc-950"
-                        />
-                      )}
-                      <div>
-                        <p className="font-bold text-white line-clamp-1">{sub.title}</p>
-                        <p className="text-[11px] text-zinc-400 line-clamp-1">{sub.description}</p>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-blue-400">
+                  <tr key={sub.id || sub._id}>
+                    <td className="text-white font-medium">{sub.title}</td>
+                    <td className="text-stone-400">
                       {typeof sub.category === 'object' ? sub.category?.name : sub.category}
                     </td>
-                    <td className="py-3.5 px-4 font-medium">
-                      {typeof sub.creator === 'object' ? sub.creator?.username || sub.creator?.name : (typeof sub.author === 'object' ? sub.author?.username || sub.author?.name : (sub.creator || sub.author || 'Member'))}
+                    <td className="text-stone-300">{sub.user?.name || sub.creator || sub.author || 'Member'}</td>
+                    <td className="text-stone-500 tabular-nums">
+                      {sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : '—'}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-zinc-400">
-                      {sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : sub.submissionDate}
-                    </td>
-                    <td className="py-3.5 px-5 text-right">
-                      <div className="inline-flex items-center gap-2">
+                    <td className="text-right">
+                      <div className="inline-flex gap-1.5">
                         <button
                           type="button"
                           onClick={() => updateFanSubmissionStatus(sub.id || sub._id, 'approved')}
-                          className="px-3 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition-colors"
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold admin-btn-primary"
                         >
                           Approve
                         </button>
                         <button
                           type="button"
                           onClick={() => updateFanSubmissionStatus(sub.id || sub._id, 'rejected')}
-                          className="px-3 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] font-bold transition-colors"
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold admin-btn-ghost"
                         >
                           Reject
                         </button>
@@ -258,59 +309,56 @@ export default function AdminDashboard() {
                 ))}
               </tbody>
             </table>
-          </div>
-        ) : (
-          <div className="p-8 rounded-3xl bg-[#0c101d] border border-white/[0.08] text-center">
-            <p className="text-xs text-zinc-400 font-medium">All community fan submissions are reviewed and up to date!</p>
-          </div>
+          </AdminTableWrap>
         )}
-      </div>
+      </AdminSection>
 
-      {/* Feedback Tickets */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-blue-400" />
-            <h2 className="text-lg font-bold text-white tracking-tight font-display">
-              Recent Feedback Tickets ({pendingFeedback.length} Unresolved)
-            </h2>
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="admin-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white">Recent users</h2>
+            <Link to="/admin/users" className="text-xs text-[#ff2e63] hover:text-[#ff6b8f]">
+              View all
+            </Link>
           </div>
-          <Link
-            to="/admin/feedback"
-            className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
-          >
-            <span>All Feedback</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          {recentUsers.length === 0 ? (
+            <p className="text-sm text-stone-500">No users yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentUsers.map((u) => (
+                <li key={u.id || u._id} className="flex items-center justify-between gap-3 text-xs">
+                  <div className="min-w-0">
+                    <p className="text-white font-medium truncate">{u.name}</p>
+                    <p className="text-stone-500 truncate">{u.email}</p>
+                  </div>
+                  <AdminStatus value={u.role} />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {feedbackList.slice(0, 4).map((fb) => (
-            <div
-              key={fb.id || fb._id}
-              className="p-5 rounded-3xl bg-[#0c101d] border border-white/[0.08] space-y-2 text-xs shadow-xl"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-white truncate text-sm font-display">{fb.subject}</span>
-                <span
-                  className={`px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase ${
-                    fb.status === 'pending'
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  }`}
-                >
-                  {fb.status}
-                </span>
-              </div>
-              <p className="text-zinc-400 line-clamp-2 leading-relaxed">{fb.message}</p>
-              <div className="flex items-center justify-between pt-2 border-t border-white/[0.05] text-[11px] text-zinc-400 font-mono">
-                <span>From: {fb.userName || fb.email || 'Anonymous'}</span>
-                <span>Type: {fb.type || 'General'}</span>
-              </div>
-            </div>
-          ))}
+        <div className="admin-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white">Recent content</h2>
+            <Link to="/admin/content" className="text-xs text-[#ff2e63] hover:text-[#ff6b8f]">
+              View all
+            </Link>
+          </div>
+          {recentContent.length === 0 ? (
+            <p className="text-sm text-stone-500">No content yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentContent.map((c) => (
+                <li key={c.id || c._id} className="flex items-center justify-between gap-3 text-xs">
+                  <p className="text-white font-medium truncate">{c.title}</p>
+                  <span className="text-stone-500 uppercase tabular-nums shrink-0">{c.contentType}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

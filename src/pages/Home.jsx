@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Flame,
@@ -13,7 +13,8 @@ import {
   Sparkles,
   Ticket,
   MapPin,
-  Clock
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import CategoryCard from '../components/CategoryCard';
@@ -23,85 +24,56 @@ import UpcomingReleaseCard from '../components/UpcomingReleaseCard';
 import AutoSlider from '../components/AutoSlider';
 import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
+import HeroSidebar from '../components/HeroSidebar';
 
 export default function Home() {
-  const { categories, contentList, characters, events } = useData();
+  const { categories, contentList, characters, events, loading, error } = useData();
 
   const [trendingCategoryFilter, setTrendingCategoryFilter] = useState('All');
   const [activeVideoModal, setActiveVideoModal] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  const heroSlides = [
-    {
-      badge: "ANIME",
-      titlePrefix: "Explore the",
-      titleHighlight: "Anime Universe",
-      subtitle:
-        "Dive into epic stories, legendary characters and endless adventures. Your favorite anime, all in one place.",
-      ctaText: "Explore Anime",
-      ctaLink: "/category/anime",
-      bgImage:
-        "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=85",
-      logoText: "One Piece",
-      genreText: "Adventure • Action • Fantasy"
-    },
-    {
-      badge: "GAMING",
-      titlePrefix: "Enter the",
-      titleHighlight: "Gaming Universe",
-      subtitle:
-        "Discover legendary games, characters, tournaments, gameplay and everything your gaming fandom loves.",
-      ctaText: "Explore Gaming",
-      ctaLink: "/category/gaming",
-      bgImage:
-        "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&auto=format&fit=crop&q=85",
-      logoText: "The Witcher",
-      genreText: "RPG • Fantasy • Open World"
-    },
-    {
-      badge: "MOVIES",
-      titlePrefix: "Experience the",
-      titleHighlight: "Cinematic Universe",
-      subtitle:
-        "Explore iconic movies, legendary characters, trailers, stories and the fandoms behind them.",
-      ctaText: "Explore Movies",
-      ctaLink: "/category/movies",
-      bgImage:
-        "https://images.unsplash.com/photo-1635863138275-d9b33299680b?w=1600&auto=format&fit=crop&q=85",
-      logoText: "Iron Man",
-      genreText: "Action • Sci-Fi • Hero"
-    },
-    {
-      badge: "MANGA",
-      titlePrefix: "Discover the",
-      titleHighlight: "Manga Universe",
-      subtitle:
-        "Explore legendary manga stories, characters, upcoming releases and the worlds created by your favorite artists.",
-      ctaText: "Explore Manga",
-      ctaLink: "/category/manga",
-      bgImage:
-        "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?w=1600&auto=format&fit=crop&q=85",
-      logoText: "Solo Leveling",
-      genreText: "Action • Dark Fantasy • Webtoon"
-    },
-    {
-      badge: "COSPLAY",
-      titlePrefix: "Celebrate the",
-      titleHighlight: "Fan Universe",
-      subtitle:
-        "Discover amazing cosplay, fan creations, events and the creativity of the global fandom community.",
-      ctaText: "Explore Cosplay",
-      ctaLink: "/category/cosplay",
-      bgImage:
-        "https://images.unsplash.com/photo-1563089145-599997674d42?w=1600&auto=format&fit=crop&q=85",
-      logoText: "Cosplay Hub",
-      genreText: "Community • Crafts • Showcase"
-    }
-  ];
+  // Dynamic calculation of Hero Slides using real MongoDB content data
+  const heroSlides = useMemo(() => {
+    if (!contentList || contentList.length === 0) return [];
 
+    // Filter featured items if available, or fallback to top content items
+    const featured = contentList.filter((c) => c.featured || c.isFeatured);
+    const sourceItems = featured.length > 0 ? featured : contentList;
+
+    return sourceItems.slice(0, 6).map((item) => {
+      const catName = typeof item.category === 'object' ? item.category?.name : item.category || 'Fandom';
+      const genreStr = Array.isArray(item.genre)
+        ? item.genre.join(' • ')
+        : item.genre || item.contentType?.toUpperCase() || 'Explore Fandom';
+
+      return {
+        id: item._id || item.id,
+        slug: item.slug || item._id || item.id,
+        badge: catName.toUpperCase(),
+        title: item.title,
+        subtitle: item.description || item.synopsis || item.excerpt || 'Dive into epic stories, legendary characters and endless adventures.',
+        ctaText: `Explore ${item.title}`,
+        ctaLink: `/content/${item.slug || item._id || item.id}`,
+        bgImage: item.banner || item.image || item.thumbnail || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=85',
+        logoText: item.title,
+        genreText: genreStr,
+        rating: item.rating || item.averageRating
+      };
+    });
+  }, [contentList]);
+
+  // Adjust active slide index safely when slides length changes
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (currentSlide >= heroSlides.length && heroSlides.length > 0) {
+      setCurrentSlide(0);
+    }
+  }, [heroSlides.length, currentSlide]);
+
+  // Automatic slideshow progression
+  useEffect(() => {
+    if (!isAutoPlaying || heroSlides.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 6000);
@@ -109,16 +81,18 @@ export default function Home() {
   }, [isAutoPlaying, heroSlides.length]);
 
   const nextSlide = () => {
+    if (heroSlides.length === 0) return;
     setIsAutoPlaying(false);
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   };
 
   const prevSlide = () => {
+    if (heroSlides.length === 0) return;
     setIsAutoPlaying(false);
     setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
 
-  const activeSlide = heroSlides[currentSlide];
+  const activeSlide = heroSlides[currentSlide] || heroSlides[0];
 
   const trendingCategories = ['All', 'Anime', 'Gaming', 'Movies', 'TV Shows', 'K-Pop', 'Comics'];
 
@@ -161,99 +135,166 @@ export default function Home() {
 
   return (
     <div className="space-y-14 sm:space-y-20 pb-6 sm:pb-12 w-full">
-      <section
-        className="relative rounded-3xl overflow-hidden min-h-[440px] xs:min-h-[480px] sm:min-h-[520px] lg:min-h-[560px] border border-white/10 bg-[#060a14] shadow-2xl flex items-center transition-all duration-700 group/hero"
-        onMouseEnter={() => setIsAutoPlaying(false)}
-        onMouseLeave={() => setIsAutoPlaying(true)}
-      >
-        <div className="absolute inset-0 z-0">
-          <img
-            src={activeSlide.bgImage}
-            alt={activeSlide.titleHighlight}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover object-center sm:object-right transition-all duration-1000 scale-100"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#060a14] via-[#060a14]/90 sm:via-[#060a14]/75 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#060a14] via-transparent to-black/40" />
-        </div>
+      {/* HERO SECTION WITH DYNAMIC SLIDER & HERO SIDEBAR */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+        {/* Main Hero Slider Banner */}
+        <div className="lg:col-span-8 min-h-[440px] xs:min-h-[480px] sm:min-h-[520px] lg:min-h-[540px]">
+          {/* Loading Skeleton State */}
+          {loading && (
+            <div className="w-full h-full min-h-[440px] rounded-3xl animate-pulse bg-[#060a14] border border-white/10 p-6 sm:p-10 flex flex-col justify-between shadow-2xl">
+              <div className="space-y-4 max-w-lg">
+                <div className="w-24 h-6 bg-zinc-800/60 rounded-full" />
+                <div className="w-3/4 h-10 bg-zinc-800/80 rounded-2xl" />
+                <div className="w-full h-4 bg-zinc-800/50 rounded" />
+                <div className="w-2/3 h-4 bg-zinc-800/50 rounded" />
+                <div className="w-36 h-10 bg-zinc-800/70 rounded-full pt-2" />
+              </div>
+              <div className="flex gap-2 justify-center">
+                <div className="w-6 h-2 bg-zinc-800/60 rounded-full" />
+                <div className="w-2 h-2 bg-zinc-800/40 rounded-full" />
+                <div className="w-2 h-2 bg-zinc-800/40 rounded-full" />
+              </div>
+            </div>
+          )}
 
-        <button
-          type="button"
-          onClick={prevSlide}
-          className="absolute left-2.5 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/15 flex items-center justify-center backdrop-blur-md transition-all shadow-xl hover:scale-110 active:scale-90"
-          aria-label="Previous Slide"
-        >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
+          {/* Error State */}
+          {!loading && error && heroSlides.length === 0 && (
+            <div className="w-full h-full min-h-[440px] rounded-3xl bg-[#060a14] border border-red-500/30 p-8 flex flex-col items-center justify-center text-center space-y-3 shadow-2xl">
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
+              <h3 className="text-lg font-bold text-white">Unable to load hero slider</h3>
+              <p className="text-xs text-zinc-400 max-w-md">{error}</p>
+            </div>
+          )}
 
-        <button
-          type="button"
-          onClick={nextSlide}
-          className="absolute right-2.5 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/15 flex items-center justify-center backdrop-blur-md transition-all shadow-xl hover:scale-110 active:scale-90"
-          aria-label="Next Slide"
-        >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
+          {/* Empty State */}
+          {!loading && !error && heroSlides.length === 0 && (
+            <div className="w-full h-full min-h-[440px] rounded-3xl bg-[#060a14] border border-white/10 p-8 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl">
+              <Sparkles className="w-10 h-10 text-red-500 mx-auto" />
+              <h3 className="text-lg font-bold text-white">No featured content available</h3>
+              <p className="text-xs text-zinc-400 max-w-md">Discover latest content across our fandom universe.</p>
+              <Link
+                to="/explore"
+                className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg"
+              >
+                Explore Fandoms
+              </Link>
+            </div>
+          )}
 
-        <div className="relative z-10 p-5 sm:p-10 lg:p-16 max-w-xl lg:max-w-2xl space-y-5 sm:space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ff2e63]/20 text-[#ff3366] border border-[#ff2e63]/40 text-[11px] sm:text-xs font-black tracking-wider uppercase backdrop-blur-md shadow-lg">
-            <Flame className="w-3.5 h-3.5 fill-current text-[#ff2e63]" />
-            <span>{activeSlide.badge}</span>
-          </div>
-
-          <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight font-display leading-[1.08]">
-            {activeSlide.titlePrefix}{' '}
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#ff2e63] via-[#ff2e63] to-[#60a5fa] drop-shadow-[0_0_35px_rgba(255,46,99,0.4)]">
-              {activeSlide.titleHighlight}
-            </span>
-          </h1>
-
-          <p className="text-xs sm:text-sm text-zinc-300 font-medium leading-relaxed max-w-lg">
-            {activeSlide.subtitle}
-          </p>
-
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 pt-2">
-            <Link
-              to={activeSlide.ctaLink}
-              className="inline-flex items-center justify-center gap-2 px-4 xs:px-5 sm:px-6 py-2.5 rounded-full bg-gradient-to-r from-[#ff2e63] to-[#d6004c] hover:from-[#ff1751] hover:to-[#b80041] text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-[#ff2e63]/40 transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+          {/* Real Dynamic MongoDB Hero Slide Banner */}
+          {!loading && activeSlide && (
+            <div
+              className="relative w-full h-full rounded-3xl overflow-hidden min-h-[440px] xs:min-h-[480px] sm:min-h-[520px] lg:min-h-[540px] border border-white/10 bg-[#060a14] shadow-2xl flex items-center transition-all duration-700 group/hero"
+              onMouseEnter={() => setIsAutoPlaying(false)}
+              onMouseLeave={() => setIsAutoPlaying(true)}
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>{activeSlide.ctaText}</span>
-            </Link>
+              {/* Background Image with Ambient Gradient Overlay */}
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={activeSlide.bgImage}
+                  alt={activeSlide.title}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover object-center sm:object-right transition-all duration-1000 scale-100"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#060a14] via-[#060a14]/90 sm:via-[#060a14]/75 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#060a14] via-transparent to-black/40" />
+              </div>
 
+              {/* Prev Slide Navigation Arrow */}
+              {heroSlides.length > 1 && (
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/15 flex items-center justify-center backdrop-blur-md transition-all shadow-xl hover:scale-110 active:scale-90"
+                  aria-label="Previous Slide"
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
 
-          </div>
+              {/* Next Slide Navigation Arrow */}
+              {heroSlides.length > 1 && (
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/15 flex items-center justify-center backdrop-blur-md transition-all shadow-xl hover:scale-110 active:scale-90"
+                  aria-label="Next Slide"
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
 
-          {/* Anime Title & Genres metadata badge on lower left */}
-          <div className="flex items-center gap-2.5 sm:gap-3 pt-2 sm:pt-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black/60 border border-white/15 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-lg">
-              <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ff2e63]" />
+              {/* Active Slide Information */}
+              <div className="relative z-10 p-5 sm:p-8 lg:p-12 max-w-xl space-y-4 sm:space-y-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ff2e63]/20 text-[#ff3366] border border-[#ff2e63]/40 text-[11px] sm:text-xs font-black tracking-wider uppercase backdrop-blur-md shadow-lg">
+                  <Flame className="w-3.5 h-3.5 fill-current text-[#ff2e63]" />
+                  <span>{activeSlide.badge}</span>
+                </div>
+
+                <h1 className="text-3xl xs:text-4xl sm:text-5xl font-black text-white tracking-tight font-display leading-[1.08] line-clamp-2">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-500 to-red-600 drop-shadow-[0_0_35px_rgba(255,46,99,0.4)]">
+                    {activeSlide.title}
+                  </span>
+                </h1>
+
+                <p className="text-xs sm:text-sm text-zinc-300 font-medium leading-relaxed max-w-md line-clamp-3">
+                  {activeSlide.subtitle}
+                </p>
+
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 pt-1">
+                  <Link
+                    to={activeSlide.ctaLink}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#ff2e63] to-[#d6004c] hover:from-[#ff1751] hover:to-[#b80041] text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-[#ff2e63]/40 transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>{activeSlide.ctaText}</span>
+                  </Link>
+                </div>
+
+                {/* Footer Metadata Badge on lower left */}
+                <div className="flex items-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
+                  <div className="w-8 h-8 rounded-xl bg-black/60 border border-white/15 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-lg">
+                    <Flame className="w-3.5 h-3.5 text-[#ff2e63]" />
+                  </div>
+                  <div className="space-y-0.5 min-w-0">
+                    <h4 className="text-xs sm:text-sm font-bold text-white font-display leading-tight truncate">
+                      {activeSlide.logoText}
+                    </h4>
+                    <p className="text-[10px] sm:text-[11px] text-zinc-400 font-medium truncate">
+                      {activeSlide.genreText} {activeSlide.rating ? `• ★ ${activeSlide.rating}` : ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dots Indicators */}
+              {heroSlides.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                  {heroSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setIsAutoPlaying(false);
+                        setCurrentSlide(idx);
+                      }}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        currentSlide === idx
+                          ? 'w-7 bg-[#ff2e63] shadow-md shadow-[#ff2e63]/60'
+                          : 'w-2.5 bg-white/20 hover:bg-white/50'
+                      }`}
+                      aria-label={`Slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="space-y-0.5 min-w-0">
-              <h4 className="text-xs sm:text-sm font-bold text-white font-display leading-tight truncate">{activeSlide.logoText}</h4>
-              <p className="text-[10px] sm:text-[11px] text-zinc-400 font-medium truncate">{activeSlide.genreText}</p>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Center Bottom Slide Dots */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-          {heroSlides.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setIsAutoPlaying(false);
-                setCurrentSlide(idx);
-              }}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                currentSlide === idx
-                  ? 'w-7 bg-[#ff2e63] shadow-md shadow-[#ff2e63]/60'
-                  : 'w-2.5 bg-white/20 hover:bg-white/50'
-              }`}
-              aria-label={`Slide ${idx + 1}`}
-            />
-          ))}
+        {/* Dynamic Hero Sidebar Panel */}
+        <div className="lg:col-span-4 h-full min-h-[420px]">
+          <HeroSidebar />
         </div>
       </section>
 
@@ -607,7 +648,10 @@ export default function Home() {
               };
               const featuredLoc = formatEventLocation(featured);
               return (
-                <div className="lg:col-span-7 xl:col-span-8 rounded-[28px] overflow-hidden border border-red-500/40 bg-gradient-to-b from-[#13080c] via-[#090b10] to-[#050608] hover:border-red-400 transition-all duration-500 shadow-[0_0_35px_rgba(220,38,38,0.25)] hover:shadow-[0_0_55px_rgba(239,68,68,0.45)] flex flex-col md:flex-row group relative">
+                <Link
+                  to={`/events/${featuredSlug}`}
+                  className="lg:col-span-7 xl:col-span-8 rounded-[28px] overflow-hidden border border-red-500/40 bg-gradient-to-b from-[#13080c] via-[#090b10] to-[#050608] hover:border-red-400 transition-all duration-500 shadow-[0_0_35px_rgba(220,38,38,0.25)] hover:shadow-[0_0_55px_rgba(239,68,68,0.45)] flex flex-col md:flex-row group relative block"
+                >
                   <div className="md:w-1/2 relative min-h-[260px] sm:min-h-[300px] bg-black overflow-hidden">
                     <img
                       src={featured.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&auto=format&fit=crop&q=85'}
@@ -658,17 +702,16 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="pt-2">
-                      <Link
-                        to={`/events/${featuredSlug}`}
+                      <span
                         className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white text-xs sm:text-sm font-black text-center shadow-[0_0_25px_rgba(239,68,68,0.5)] hover:shadow-[0_0_35px_rgba(239,68,68,0.8)] flex items-center justify-center gap-2 transition-all group/btn border border-red-400/40"
                       >
                         <Ticket className="w-4 h-4" />
                         <span>View Event Details</span>
                         <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                      </Link>
+                      </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })()}
 

@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
-import { Layers, Plus, Edit, Trash2, Loader2, AlertCircle, Upload } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import Modal from '../../components/Modal';
+import {
+  AdminPageHeader,
+  AdminAlert,
+  AdminTableWrap,
+  AdminEditBtn,
+  AdminDeleteBtn,
+  AdminField,
+  AdminFilePick,
+  AdminFormActions,
+  AdminConfirm
+} from '../../components/admin/AdminUi';
 
 export default function AdminCategories() {
   const { categories, addCategory, updateCategory, deleteCategory } = useData();
@@ -16,6 +27,7 @@ export default function AdminCategories() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   const handleOpenAdd = () => {
     setEditingId(null);
@@ -78,97 +90,68 @@ export default function AdminCategories() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this category?')) return;
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
     setErrorMsg('');
-    const res = await deleteCategory(id);
+    const res = await deleteCategory(pendingDelete);
+    setPendingDelete(null);
     if (!res.success) {
       setErrorMsg(res.error || 'Failed to delete category');
     }
   };
 
   return (
-    <div className="space-y-6 pb-16">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight font-display">
-            Manage Fandom Categories
-          </h1>
-          <p className="text-xs text-zinc-400">
-            Create and edit fandom ecosystems, descriptions, hero artwork, and slug paths.
-          </p>
-        </div>
+    <div className="space-y-6 max-w-[1180px]">
+      <AdminPageHeader
+        kicker="Catalog"
+        title="Categories"
+        description="Create and edit fandom categories, descriptions, artwork, and slug paths."
+        actions={
+          <button type="button" onClick={handleOpenAdd} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold admin-btn-primary">
+            <Plus className="w-4 h-4" />
+            Add category
+          </button>
+        }
+      />
 
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-all shadow-md shadow-rose-950"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Category</span>
-        </button>
-      </div>
+      <AdminAlert>{errorMsg}</AdminAlert>
 
-      {errorMsg && (
-        <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      <div className="overflow-x-auto rounded-2xl border border-zinc-850 bg-zinc-950">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-zinc-900/60 border-b border-zinc-850 text-zinc-400 uppercase tracking-wider font-semibold">
+      <AdminTableWrap>
+        <table className="text-left">
+          <thead>
             <tr>
-              <th className="py-3.5 px-4">Category</th>
-              <th className="py-3.5 px-4">Slug</th>
-              <th className="py-3.5 px-4">Description</th>
-              <th className="py-3.5 px-4 text-right">Actions</th>
+              <th>Category</th>
+              <th>Slug</th>
+              <th>Description</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-900 text-zinc-300">
+          <tbody>
             {categories.length === 0 ? (
               <tr>
-                <td colSpan="4" className="py-8 text-center text-zinc-500 font-medium">
-                  No Categories Found
+                <td colSpan="4" className="py-10 text-center text-stone-500">
+                  No categories found
                 </td>
               </tr>
             ) : (
               categories.map((c) => {
                 const id = c.id || c._id;
                 return (
-                  <tr key={id} className="hover:bg-zinc-900/40 transition-colors">
-                    <td className="py-3.5 px-4 flex items-center gap-3">
-                      {c.image && (
-                        <img
-                          src={c.image}
-                          alt={c.name}
-                          referrerPolicy="no-referrer"
-                          className="w-10 h-10 rounded-xl object-cover bg-zinc-900"
-                        />
-                      )}
-                      <span className="font-bold text-white">{c.name}</span>
+                  <tr key={id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        {c.image && (
+                          <img src={c.image} alt="" referrerPolicy="no-referrer" className="w-10 h-10 rounded-lg object-cover bg-black/40" />
+                        )}
+                        <span className="font-medium text-white">{c.name}</span>
+                      </div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-zinc-400">{c.slug}</td>
-                    <td className="py-3.5 px-4 max-w-xs truncate text-zinc-400">{c.description}</td>
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(c)}
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900"
-                          title="Edit category"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(id)}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-900"
-                          title="Delete category"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                    <td className="font-mono text-[11px] text-stone-400">{c.slug}</td>
+                    <td className="max-w-xs truncate text-stone-400">{c.description}</td>
+                    <td className="text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <AdminEditBtn onClick={() => handleOpenEdit(c)} />
+                        <AdminDeleteBtn onClick={() => setPendingDelete(id)} />
                       </div>
                     </td>
                   </tr>
@@ -177,18 +160,11 @@ export default function AdminCategories() {
             )}
           </tbody>
         </table>
-      </div>
+      </AdminTableWrap>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingId ? 'Edit Fandom Category' : 'Create Fandom Category'}
-      >
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Edit category' : 'Create category'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
-              Category Name *
-            </label>
+          <AdminField label="Category name *">
             <input
               type="text"
               required
@@ -199,81 +175,44 @@ export default function AdminCategories() {
                   setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
                 }
               }}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-100 focus:outline-none focus:border-rose-500"
+              className="w-full px-3 py-2 text-sm"
             />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
-              URL Slug *
-            </label>
+          </AdminField>
+          <AdminField label="URL slug *">
+            <input type="text" required value={slug} onChange={(e) => setSlug(e.target.value)} className="w-full px-3 py-2 text-xs font-mono" />
+          </AdminField>
+          <AdminField label="Description *">
+            <textarea rows={2} required value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-3 py-2 text-sm" />
+          </AdminField>
+          <AdminField label="Banner image">
+            <AdminFilePick
+              fileLabel={imageFile ? imageFile.name : 'Choose local image file'}
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files[0] || null)}
+            />
             <input
               type="text"
-              required
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-200 focus:outline-none focus:border-rose-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1">
-              Description *
-            </label>
-            <textarea
-              rows={2}
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-100 focus:outline-none focus:border-rose-500"
-            />
-          </div>
-
-          {/* Image file or URL */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-zinc-300">
-              Banner Image (Upload File or URL)
-            </label>
-            <div className="flex items-center gap-2">
-              <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl text-xs text-zinc-300">
-                <Upload className="w-4 h-4 text-rose-400" />
-                <span className="truncate">{imageFile ? imageFile.name : 'Choose local image file'}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files[0] || null)}
-                  className="hidden"
-                />
-              </label>
-            </div>
-            <input
-              type="text"
-              placeholder="Or paste external image URL"
+              placeholder="Or paste an image URL"
               value={image}
               onChange={(e) => setImage(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-200 focus:outline-none focus:border-rose-500"
+              className="w-full px-3 py-2 mt-2 text-xs font-mono"
             />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-xl flex items-center gap-1.5 disabled:opacity-50"
-            >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>{editingId ? 'Save Changes' : 'Create Category'}</span>
-            </button>
-          </div>
+          </AdminField>
+          <AdminFormActions
+            onCancel={() => setIsModalOpen(false)}
+            submitting={isSubmitting}
+            submitLabel={editingId ? 'Save changes' : 'Create category'}
+          />
         </form>
       </Modal>
+
+      <AdminConfirm
+        open={!!pendingDelete}
+        title="Delete category"
+        message="This will permanently remove the category. This action cannot be undone."
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

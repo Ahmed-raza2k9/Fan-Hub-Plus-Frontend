@@ -6,7 +6,6 @@ import ContentCard from '../components/ContentCard';
 import CharacterCard from '../components/CharacterCard';
 import MerchandiseCard from '../components/MerchandiseCard';
 import EventCard from '../components/EventCard';
-import FavoriteButton from '../components/FavoriteButton';
 import EmptyState from '../components/EmptyState';
 
 export default function CategoryDetails() {
@@ -109,7 +108,6 @@ export default function CategoryDetails() {
                 <Flame className="w-3.5 h-3.5 fill-current" />
                 <span>Fandom Realm</span>
               </span>
-              <FavoriteButton categoryName={category.name} showLabel={true} />
               <span className="text-[11px] sm:text-xs font-mono text-zinc-400 font-bold">
                 {category.contentCount ? `${category.contentCount}+ Catalog Entries` : 'Featured Hub'}
               </span>
@@ -126,22 +124,22 @@ export default function CategoryDetails() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200 dark:border-white/[0.08] pb-4">
         {/* Horizontal Scroll Tabs with sleek red badges that never line-wrap */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#0b0407]/80 rounded-2xl border border-red-500/20 overflow-x-auto scrollbar-none w-full sm:w-auto -mx-1 px-1 sm:mx-0 sm:px-0 shadow-inner">
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-100 dark:bg-[#0b0407]/80 rounded-2xl border border-zinc-200 dark:border-red-500/20 overflow-x-auto scrollbar-none w-full sm:w-auto -mx-1 px-1 sm:mx-0 sm:px-0 shadow-inner">
           <button
             type="button"
             onClick={() => setActiveTab('content')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'content'
                 ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-md shadow-red-600/40 font-black'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/[0.04]'
             }`}
           >
             <Film className="w-3.5 h-3.5 text-current shrink-0" />
             <span>Content</span>
             <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded-full font-bold ${
-              activeTab === 'content' ? 'bg-white/25 text-white' : 'bg-white/10 text-zinc-400'
+              activeTab === 'content' ? 'bg-white/25 text-white' : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-400'
             }`}>
               {relatedContent.length}
             </span>
@@ -153,13 +151,13 @@ export default function CategoryDetails() {
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'characters'
                 ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-md shadow-red-600/40 font-black'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/[0.04]'
             }`}
           >
             <Users className="w-3.5 h-3.5 text-current shrink-0" />
             <span>Characters</span>
             <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded-full font-bold ${
-              activeTab === 'characters' ? 'bg-white/25 text-white' : 'bg-white/10 text-zinc-400'
+              activeTab === 'characters' ? 'bg-white/25 text-white' : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-400'
             }`}>
               {relatedCharacters.length}
             </span>
@@ -171,13 +169,13 @@ export default function CategoryDetails() {
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'merchandise'
                 ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-md shadow-red-600/40 font-black'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/[0.04]'
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5 text-current shrink-0" />
             <span>Merchandise</span>
             <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded-full font-bold ${
-              activeTab === 'merchandise' ? 'bg-white/25 text-white' : 'bg-white/10 text-zinc-400'
+              activeTab === 'merchandise' ? 'bg-white/25 text-white' : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-400'
             }`}>
               {relatedMerchandise.length}
             </span>
@@ -189,13 +187,13 @@ export default function CategoryDetails() {
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'events'
                 ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-md shadow-red-600/40 font-black'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/[0.04]'
             }`}
           >
             <Calendar className="w-3.5 h-3.5 text-current shrink-0" />
             <span>Events</span>
             <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded-full font-bold ${
-              activeTab === 'events' ? 'bg-white/25 text-white' : 'bg-white/10 text-zinc-400'
+              activeTab === 'events' ? 'bg-white/25 text-white' : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-400'
             }`}>
               {relatedEvents.length}
             </span>
@@ -208,7 +206,7 @@ export default function CategoryDetails() {
               <select
                 value={contentTypeFilter}
                 onChange={(e) => setContentTypeFilter(e.target.value)}
-                className="w-full appearance-none pl-3 pr-8 py-2 bg-[#0e0710] border border-red-500/30 hover:border-red-500/60 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500 shadow-sm transition-colors cursor-pointer"
+                className="w-full appearance-none pl-3 pr-8 py-2 bg-white dark:bg-[#0e0710] border border-zinc-200 dark:border-red-500/30 hover:border-red-500/60 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500 shadow-sm transition-colors cursor-pointer"
               >
                 <option value="all">All Media</option>
                 <option value="video">Videos</option>
@@ -222,7 +220,7 @@ export default function CategoryDetails() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full appearance-none pl-3 pr-8 py-2 bg-[#0e0710] border border-red-500/30 hover:border-red-500/60 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500 shadow-sm transition-colors cursor-pointer"
+                className="w-full appearance-none pl-3 pr-8 py-2 bg-white dark:bg-[#0e0710] border border-zinc-200 dark:border-red-500/30 hover:border-red-500/60 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-red-500 shadow-sm transition-colors cursor-pointer"
               >
                 <option value="popularity">Sort: Popularity</option>
                 <option value="newest">Sort: Newest</option>

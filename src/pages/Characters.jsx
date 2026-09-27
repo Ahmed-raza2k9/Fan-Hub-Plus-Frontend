@@ -81,7 +81,7 @@ export default function Characters() {
           className={`px-3.5 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
             selectedCategory === 'all'
               ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 border border-red-500/50'
-              : 'bg-[#0c101d] text-zinc-400 hover:text-white border border-white/[0.08] hover:border-red-500/40'
+              : 'bg-white dark:bg-[#0c101d] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-white/[0.08] hover:bg-zinc-100 dark:hover:border-red-500/40'
           }`}
         >
           All Categories
@@ -94,7 +94,7 @@ export default function Characters() {
             className={`px-3.5 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
               selectedCategory === cat.slug
                 ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 border border-red-500/50'
-                : 'bg-[#0c101d] text-zinc-400 hover:text-white border border-white/[0.08] hover:border-red-500/40'
+                : 'bg-white dark:bg-[#0c101d] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-white/[0.08] hover:bg-zinc-100 dark:hover:border-red-500/40'
             }`}
           >
             {cat.name}

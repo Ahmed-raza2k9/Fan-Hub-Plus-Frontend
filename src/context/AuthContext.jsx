@@ -19,6 +19,17 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('fanhub_token') || null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // Global Auth Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login');
+
+  const openAuthModal = (mode = 'login') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
+  const closeAuthModal = () => setIsAuthModalOpen(false);
+
+
   // Restore & verify session on initial mount / token change
   useEffect(() => {
     let isMounted = true;
@@ -206,7 +217,11 @@ export function AuthProvider({ children }) {
         logout,
         forgotPassword,
         resetPassword,
-        updateProfile
+        updateProfile,
+        isAuthModalOpen,
+        authModalMode,
+        openAuthModal,
+        closeAuthModal
       }}
     >
       {children}

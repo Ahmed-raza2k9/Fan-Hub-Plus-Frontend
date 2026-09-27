@@ -8,6 +8,9 @@ import Layout from './components/Layout';
 import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import GuestRoute from './components/GuestRoute';
+import GlobalAuthModal from './components/GlobalAuthModal';
+import AuthRouteTrigger from './components/AuthRouteTrigger';
 
 import Home from './pages/Home';
 import Explore from './pages/Explore';
@@ -25,8 +28,6 @@ import Media from './pages/Media';
 import About from './pages/About';
 import NotFound from './pages/NotFound';
 
-import Login from './pages/Login';
-import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
@@ -36,6 +37,8 @@ import Submit from './pages/Submit';
 import Feedback from './pages/Feedback';
 
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminRatings from './pages/admin/AdminRatings';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminContent from './pages/admin/AdminContent';
@@ -45,12 +48,16 @@ import AdminEvents from './pages/admin/AdminEvents';
 import AdminFanSubmissions from './pages/admin/AdminFanSubmissions';
 import AdminFeedback from './pages/admin/AdminFeedback';
 
+import ScrollToTop from './components/ScrollToTop';
+
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <DataProvider>
           <BrowserRouter>
+            <GlobalAuthModal />
+            <ScrollToTop />
             <Routes>
               <Route element={<Layout />}>
                 {/* Public Routes */}
@@ -70,11 +77,14 @@ export default function App() {
                 <Route path="/fan-creations" element={<FanCreations />} />
                 <Route path="/about" element={<About />} />
 
-                {/* Authentication Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                {/* Authentication Routes (Guest Only) */}
+                <Route element={<GuestRoute />}>
+                  <Route path="/login" element={<AuthRouteTrigger mode="login" />} />
+                  <Route path="/register" element={<AuthRouteTrigger mode="register" />} />
+                  <Route path="/signup" element={<AuthRouteTrigger mode="register" />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                </Route>
 
                 {/* Protected User Routes */}
                 <Route element={<ProtectedRoute />}>
@@ -92,6 +102,8 @@ export default function App() {
               <Route element={<AdminRoute />}>
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboard />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
+                  <Route path="ratings" element={<AdminRatings />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="categories" element={<AdminCategories />} />
                   <Route path="content" element={<AdminContent />} />

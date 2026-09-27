@@ -105,11 +105,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'register' })
         setPassword('');
         setConfirmPassword('');
         onClose();
-        if (res.user?.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
       } else {
         setServerError(res.error || 'Login failed. Please check your credentials.');
       }
@@ -122,26 +117,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'register' })
         setPassword('');
         setConfirmPassword('');
         onClose();
-        if (res.user?.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
       } else {
         setServerError(res.error || 'Registration failed. Please try again.');
       }
-    }
-  };
-
-  const handleQuickLogin = (demoEmail) => {
-    const res = login(demoEmail, 'fanhub2026');
-    if (res.success) {
-      setName('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      onClose();
-      navigate('/');
     }
   };
 
@@ -433,41 +411,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'register' })
                 </button>
               </div>
             </form>
-
-            {/* Instant Demo Sign-In (on login mode) */}
-            {mode === 'login' && (
-              <div className="pt-2.5 border-t border-white/10 mt-3 space-y-1.5">
-                <p className="text-[10px] text-zinc-400 text-center uppercase tracking-widest font-black">
-                  Instant Demo Access
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('alex.hunter@fanhub.io')}
-                    className="flex items-center justify-center gap-1.5 p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-white border border-red-500/40 text-[11px] font-bold transition-all"
-                  >
-                    <User className="w-3 h-3 text-red-400" />
-                    <span>User Demo</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('marcus.vance@fanhub.io')}
-                    className="flex items-center justify-center gap-1.5 p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-white border border-red-500/40 text-[11px] font-bold transition-all"
-                  >
-                    <Shield className="w-3 h-3 text-red-400" />
-                    <span>Admin Demo</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* OR Divider */}
-            <div className="relative flex items-center justify-center my-2.5">
-              <div className="w-full border-t border-white/10" />
-              <span className="absolute px-2.5 bg-[#0b0407] text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                OR
-              </span>
-            </div>
 
             {/* Bottom Switcher */}
             <div className="text-center text-[11px] text-zinc-300">
