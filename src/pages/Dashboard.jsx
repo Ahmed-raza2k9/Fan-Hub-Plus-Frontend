@@ -26,6 +26,8 @@ export default function Dashboard() {
     ratings = {},
     categories = [],
     contentList = [],
+    characters = [],
+    merchandise = [],
     fanSubmissions = []
   } = useData();
 
