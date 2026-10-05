@@ -120,7 +120,7 @@ export const adminApi = {
   deleteEvent: (id) => request(`/events/${id}`, { method: 'DELETE' }),
 
   // Fan Submissions
-  getFanSubmissions: () => request('/admin/fan-submissions', { method: 'GET' }),
+  getFanSubmissions: () => request('/fan-submissions', { method: 'GET' }),
   getFanSubmissionById: (id) => request(`/admin/fan-submissions/${id}`, { method: 'GET' }),
   updateFanSubmission: (id, data) => request(`/admin/fan-submissions/${id}`, { method: 'PUT', body: data }),
   deleteFanSubmission: (id) => request(`/admin/fan-submissions/${id}`, { method: 'DELETE' }),

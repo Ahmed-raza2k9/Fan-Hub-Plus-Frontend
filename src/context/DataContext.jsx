@@ -51,8 +51,7 @@ export function DataProvider({ children }) {
         adminApi.getContent().catch((err) => { console.error('Content fetch error:', err); return { content: [] }; }),
         adminApi.getCharacters().catch((err) => { console.error('Characters fetch error:', err); return { characters: [] }; }),
         adminApi.getMerchandise().catch((err) => { console.error('Merchandise fetch error:', err); return { merchandise: [] }; }),
-        adminApi.getEvents().catch((err) => { console.error('Events fetch error:', err); return { events: [] }; }),
-        adminApi.getFanSubmissions().catch(() => ({ submissions: [] })),
+        adminApi.getEvents().catch((err) => { console.error('Events fetch error:', err); return { events: [] }; })
       ]);
 
       const extractArray = (res, key) => {
@@ -72,6 +71,7 @@ export function DataProvider({ children }) {
       if (token) {
         const [usersRes, subsRes, fbRes, bkmRes, ratRes] = await Promise.all([
           adminApi.getUsers().catch(() => ({ users: [] })),
+          adminApi.getFanSubmissions().catch(() => ({ submissions: [] })),
           adminApi.getFeedback().catch(() => ({ feedback: [] })),
           userApi.getBookmarks().catch(() => ({ bookmarks: [] })),
           userApi.getRatings().catch(() => ({ ratings: [] }))
@@ -605,13 +605,13 @@ export function DataProvider({ children }) {
     setBookmarks((prev) =>
       prev.map((b) =>
         b.contentSlug === slugOrId ||
-          b.contentId === slugOrId ||
-          b.characterSlug === slugOrId ||
-          b.characterId === slugOrId ||
-          b.merchandiseSlug === slugOrId ||
-          b.merchandiseId === slugOrId ||
-          b.id === slugOrId ||
-          b.raw?._id === slugOrId
+        b.contentId === slugOrId ||
+        b.characterSlug === slugOrId ||
+        b.characterId === slugOrId ||
+        b.merchandiseSlug === slugOrId ||
+        b.merchandiseId === slugOrId ||
+        b.id === slugOrId ||
+        b.raw?._id === slugOrId
           ? { ...b, note: noteText, raw: b.raw ? { ...b.raw, note: noteText } : b.raw }
           : b
       )
