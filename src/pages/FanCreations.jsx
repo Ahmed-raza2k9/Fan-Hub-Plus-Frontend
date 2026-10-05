@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Plus, Search, Layers, FileText, LogIn, Info } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import FanSubmissionCard from '../components/FanSubmissionCard';
@@ -9,7 +9,7 @@ export default function FanCreations() {
   const { fanSubmissions, categories } = useData();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-
+  const navigate = useNavigate();
   // Check if user is logged in
   const isLoggedIn = Boolean(localStorage.getItem('fanhub_token'));
 
@@ -54,7 +54,7 @@ export default function FanCreations() {
             </div>
           </div>
           <button
-            onClick={() => window.dispatchEvent(new Event('fanhub_require_login'))}
+            onClick={() => navigate('/login')}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-all shrink-0"
           >
             <LogIn className="w-4 h-4" />
