@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Plus, Search, Layers, FileText } from 'lucide-react';
+import { Sparkles, Plus, Search, Layers, FileText, LogIn, Info } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import FanSubmissionCard from '../components/FanSubmissionCard';
 import EmptyState from '../components/EmptyState';
@@ -9,6 +9,9 @@ export default function FanCreations() {
   const { fanSubmissions, categories } = useData();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Check if user is logged in
+  const isLoggedIn = Boolean(localStorage.getItem('fanhub_token'));
 
   const approvedSubmissions = useMemo(() => {
     return fanSubmissions
@@ -34,6 +37,32 @@ export default function FanCreations() {
 
   return (
     <div className="space-y-10 pb-20 max-w-7xl mx-auto">
+      {/* Logged in check banner for guest users */}
+      {!isLoggedIn && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-red-500/10 to-amber-500/10 border border-amber-500/20 text-amber-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+              <Info className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-semibold">
+                You are currently viewing as a Guest!
+              </p>
+              <p className="text-[11px] sm:text-xs text-amber-200/80">
+                Log in to submit your own creations, bookmark articles, rate fan submissions, and unlock full community features.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.dispatchEvent(new Event('fanhub_require_login'))}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-all shrink-0"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Log In Now</span>
+          </button>
+        </div>
+      )}
+
       <div className="relative rounded-3xl overflow-hidden border border-red-900/40 bg-gradient-to-r from-[#150508] via-[#0a0b12] to-[#0e0609] p-6 sm:p-12 shadow-[0_0_60px_rgba(220,38,38,0.15)]">
         {/* Glow orbs */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
