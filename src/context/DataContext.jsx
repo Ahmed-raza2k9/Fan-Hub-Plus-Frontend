@@ -40,18 +40,22 @@ export function DataProvider({ children }) {
     try {
       const token = localStorage.getItem('fanhub_token');
 
+      // 1. Fetch public data (including fanSubmissions) for ALL users
       const [
         catsRes,
         contentRes,
         charsRes,
         merchRes,
-        eventsRes
+        eventsRes,
+        subsRes
       ] = await Promise.all([
         adminApi.getCategories().catch((err) => { console.error('Categories fetch error:', err); return { categories: [] }; }),
         adminApi.getContent().catch((err) => { console.error('Content fetch error:', err); return { content: [] }; }),
         adminApi.getCharacters().catch((err) => { console.error('Characters fetch error:', err); return { characters: [] }; }),
         adminApi.getMerchandise().catch((err) => { console.error('Merchandise fetch error:', err); return { merchandise: [] }; }),
-        adminApi.getEvents().catch((err) => { console.error('Events fetch error:', err); return { events: [] }; })
+        adminApi.getEvents().catch((err) => { console.error('Events fetch error:', err); return { events: [] }; }),
+        // Call your public fan submissions endpoint (e.g. userApi.getPublicFanSubmissions() or adminApi.getFanSubmissions())
+        userApi.getFanSubmissions().catch((err) => { console.error('Fan submissions fetch error:', err); return { submissions: [] }; })
       ]);
 
       const extractArray = (res, key) => {
@@ -67,18 +71,18 @@ export function DataProvider({ children }) {
       setCharacters(extractArray(charsRes, 'characters').map(normalizeItem));
       setMerchandise(extractArray(merchRes, 'merchandise').map(normalizeItem));
       setEvents(extractArray(eventsRes, 'events').map(normalizeItem));
+      setFanSubmissions(extractArray(subsRes, 'submissions').map(normalizeItem));
 
+      // 2. Fetch authenticated user-specific data ONLY if token exists
       if (token) {
-        const [usersRes, subsRes, fbRes, bkmRes, ratRes] = await Promise.all([
+        const [usersRes, fbRes, bkmRes, ratRes] = await Promise.all([
           adminApi.getUsers().catch(() => ({ users: [] })),
-          adminApi.getFanSubmissions().catch(() => ({ submissions: [] })),
           adminApi.getFeedback().catch(() => ({ feedback: [] })),
           userApi.getBookmarks().catch(() => ({ bookmarks: [] })),
           userApi.getRatings().catch(() => ({ ratings: [] }))
         ]);
 
         setUsersList(extractArray(usersRes, 'users').map(normalizeItem));
-        setFanSubmissions(extractArray(subsRes, 'submissions').map(normalizeItem));
         setFeedbackList(extractArray(fbRes, 'feedback').map(normalizeItem));
 
         if (Array.isArray(bkmRes?.bookmarks)) {
@@ -120,7 +124,6 @@ export function DataProvider({ children }) {
         }
       } else {
         setUsersList([]);
-        setFanSubmissions([]);
         setFeedbackList([]);
         setBookmarks([]);
         setRatings({});
@@ -605,13 +608,13 @@ export function DataProvider({ children }) {
     setBookmarks((prev) =>
       prev.map((b) =>
         b.contentSlug === slugOrId ||
-        b.contentId === slugOrId ||
-        b.characterSlug === slugOrId ||
-        b.characterId === slugOrId ||
-        b.merchandiseSlug === slugOrId ||
-        b.merchandiseId === slugOrId ||
-        b.id === slugOrId ||
-        b.raw?._id === slugOrId
+          b.contentId === slugOrId ||
+          b.characterSlug === slugOrId ||
+          b.characterId === slugOrId ||
+          b.merchandiseSlug === slugOrId ||
+          b.merchandiseId === slugOrId ||
+          b.id === slugOrId ||
+          b.raw?._id === slugOrId
           ? { ...b, note: noteText, raw: b.raw ? { ...b.raw, note: noteText } : b.raw }
           : b
       )
