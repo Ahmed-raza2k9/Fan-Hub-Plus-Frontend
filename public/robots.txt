@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Private, auth-gated and non-content routes
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /bookmarks
+Disallow: /submit
+Disallow: /feedback
+Disallow: /login
+Disallow: /register
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /api/
+
+# TODO: replace with your real production domain
+Sitemap: https://msgsixxcrewfanhubplus.vercel.app/sitemap.xml
