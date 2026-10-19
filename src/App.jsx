@@ -49,6 +49,7 @@ import AdminFanSubmissions from './pages/admin/AdminFanSubmissions';
 import AdminFeedback from './pages/admin/AdminFeedback';
 
 import ScrollToTop from './components/ScrollToTop';
+import Sitemap from './components/SiteMap';
 
 export default function App() {
   return (
@@ -76,6 +77,7 @@ export default function App() {
                 <Route path="/articles" element={<FanCreations />} />
                 <Route path="/fan-creations" element={<FanCreations />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/sitemap" element={<Sitemap/>} />
 
                 {/* Authentication Routes (Guest Only) */}
                 <Route element={<GuestRoute />}>

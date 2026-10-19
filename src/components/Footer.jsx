@@ -90,9 +90,9 @@ export default function Footer() {
                 <Link to="/dashboard" className="hover:text-red-500 dark:hover:text-red-400 transition-colors">Member Dashboard</Link>
               </li>
               <li>
-                <Link to="/admin" className="hover:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-red-500" />
-                  <span>Admin Management</span>
+                <Link to="/sitemap" className="hover:text-red-500 dark:hover:text-red-400 transition-colors flex items-center gap-1.5">
+                 
+                  <span>Site Map</span>
                 </Link>
               </li>
             </ul>
